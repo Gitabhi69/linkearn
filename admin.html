@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkEarn - Admin Panel</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right top, #3a0d5c, #5c207b, #7d339a); /* Darker, more administrative purple gradient */
+            min-height: 100vh;
+            color: #ffffff;
+            display: flex;
+        }
+        .sidebar {
+            width: 280px;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            border-top-right-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
+            transition: all 0.3s ease-in-out;
+            transform: translateX(-100%); /* Hidden by default on mobile */
+            position: fixed;
+            height: 100%;
+            z-index: 50;
+        }
+        .sidebar.active {
+            transform: translateX(0%);
+        }
+        @media (min-width: 768px) {
+            .sidebar {
+                transform: translateX(0%);
+                position: static;
+                height: auto;
+            }
+        }
+        .sidebar-toggle {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            background-color: #9f7aea;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            z-index: 60;
+            display: block; /* Show on mobile */
+        }
+        @media (min-width: 768px) {
+            .sidebar-toggle {
+                display: none; /* Hide on desktop */
+            }
+        }
+        .sidebar a {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.75rem;
+            color: #e2e8f0;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+        .sidebar a:hover, .sidebar a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 2rem;
+            transition: margin-left 0.3s ease-in-out;
+            margin-left: 0; /* No margin on mobile */
+        }
+        @media (min-width: 768px) {
+            .main-content {
+                margin-left: 280px; /* Adjust for sidebar width on desktop */
+            }
+        }
+        .content-section {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+            margin-bottom: 2rem;
+            display: none; /* Hidden by default, shown by JS */
+        }
+        .content-section.active {
+            display: block;
+        }
+        .card {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px);
+        }
+        .btn-action {
+            background: linear-gradient(to right, #6b46c1, #805ad5);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        .btn-danger {
+            background: linear-gradient(to right, #dc2626, #ef4444);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            outline: none;
+            transition: border-color 0.2s ease-in-out;
+        }
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .input-field:focus {
+            border-color: #b794f4;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        th {
+            background-color: rgba(255, 255, 255, 0.1);
+            font-weight: 700;
+        }
+        .text-gray-400 {
+            color: #a0aec0;
+        }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none; /* Hidden by default */
+        }
+        .message-box button {
+            background-color: #9f7aea;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar-toggle" onclick="toggleSidebar()">☰</div>
+
+    <div class="sidebar" id="sidebar">
+        <h2 class="text-3xl font-bold mb-8 text-center">Admin Panel</h2>
+        <nav class="flex flex-col">
+            <a href="#" class="active" data-section="dashboard">Dashboard</a>
+            <a href="#" data-section="user-management">User Management</a>
+            <a href="#" data-section="withdrawal-management">Withdrawals</a>
+            <a href="#" data-section="unique-codes">Unique Codes</a>
+            <a href="#" data-section="system-settings">System Settings</a>
+            <a href="#" id="adminLogoutButton" class="mt-auto text-red-300 hover:text-red-500 hover:bg-transparent">Logout</a>
+        </nav>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <h1 class="text-4xl font-bold mb-8">Admin Dashboard</h1>
+
+        <!-- Admin Login Form (initially shown) -->
+        <div id="adminLogin" class="content-section active bg-transparent shadow-none p-0 mb-0 flex justify-center items-center h-[calc(100vh-4rem)]">
+            <div class="card p-8 w-full max-w-md">
+                <h2 class="text-3xl font-bold mb-6 text-center">Admin Login</h2>
+                <form id="adminLoginForm">
+                    <input type="text" id="adminUsername" placeholder="Username" class="input-field" required>
+                    <input type="password" id="adminPassword" placeholder="Password" class="input-field" required>
+                    <button type="submit" class="btn-action">Login</button>
+                </form>
+                <p id="adminLoginError" class="text-red-400 mt-4 hidden"></p>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="content-section">
+            <h2 class="text-3xl font-bold mb-6">Overview</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="card">
+                    <h3 class="text-xl font-semibold mb-2">Total Registered Users</h3>
+                    <p class="text-4xl font-bold text-blue-400" id="totalUsers">0</p>
+                </div>
+                <div class="card">
+                    <h3 class="text-xl font-semibold mb-2">Daily Revenue (IST)</h3>
+                    <p class="text-4xl font-bold text-green-400" id="dailyRevenue">$0.00</p>
+                </div>
+                <div class="card">
+                    <h3 class="text-xl font-semibold mb-2">Monthly Revenue (IST)</h3>
+                    <p class="text-4xl font-bold text-green-400" id="monthlyRevenue">$0.00</p>
+                </div>
+                <div class="card">
+                    <h3 class="text-xl font-semibold mb-2">Total Links Generated</h3>
+                    <p class="text-4xl font-bold" id="totalLinks">0</p>
+                </div>
+            </div>
+            <div class="card">
+                <h3 class="text-xl font-semibold mb-4">Pending Withdrawal Requests</h3>
+                <p class="text-4xl font-bold text-yellow-400" id="pendingWithdrawalsCount">0</p>
+            </div>
+        </div>
+
+        <!-- User Management Section -->
+        <div id="user-management" class="content-section">
+            <h2 class="text-3xl font-bold mb-6">User Management</h2>
+            <div class="card p-6">
+                <input type="text" id="userSearchInput" placeholder="Search by Email or Telegram Username" class="input-field mb-4">
+                <button id="searchUsersBtn" class="btn-action mb-4">Search Users</button>
+                <table class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Email</th>
+                            <th>Telegram Username</th>
+                            <th>Balance</th>
+                            <th>CPM Rate</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        <!-- User data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="editUserModal" class="message-box p-8 w-[90%] max-w-xl" style="display: none;">
+                <h3 class="text-2xl font-bold mb-4">Edit User</h3>
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId">
+                    <label class="block text-left mb-1">Full Name:</label>
+                    <input type="text" id="editFullName" class="input-field" required>
+                    <label class="block text-left mb-1">Email:</label>
+                    <input type="email" id="editEmail" class="input-field" required>
+                    <label class="block text-left mb-1">Telegram Username:</label>
+                    <input type="text" id="editTelegramUsername" class="input-field" required>
+                    <label class="block text-left mb-1">Balance:</label>
+                    <input type="number" id="editBalance" step="0.01" class="input-field" required>
+                    <label class="block text-left mb-1">CPM Rate:</label>
+                    <input type="number" id="editCpmRate" step="0.01" class="input-field" required>
+                    <div class="flex justify-end space-x-2 mt-4">
+                        <button type="button" id="saveUserBtn" class="btn-action">Save Changes</button>
+                        <button type="button" onclick="closeMessageBox()" class="btn-danger">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Withdrawal Management Section -->
+        <div id="withdrawal-management" class="content-section">
+            <h2 class="text-3xl font-bold mb-6">Withdrawal Management</h2>
+            <div class="card p-6">
+                <table class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th>User Email</th>
+                            <th>Amount</th>
+                            <th>USDT Address</th>
+                            <th>Request Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="withdrawalTableBody">
+                        <!-- Withdrawal data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Unique Codes Management Section -->
+        <div id="unique-codes" class="content-section">
+            <h2 class="text-3xl font-bold mb-6">Unique Codes Management</h2>
+            <div class="card p-6 mb-8">
+                <h3 class="text-xl font-semibold mb-4">Generate New Codes</h3>
+                <input type="number" id="numCodesToGenerate" placeholder="Number of codes (1-5)" min="1" max="5" class="input-field mb-4">
+                <button id="generateCodesBtn" class="btn-action">Generate Codes</button>
+                <div class="mt-4" id="generatedCodesDisplay">
+                    <!-- Generated codes will appear here -->
+                </div>
+            </div>
+            <div class="card p-6">
+                <h3 class="text-xl font-semibold mb-4">Active Unique Codes</h3>
+                <table class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Active</th>
+                            <th>Created Date</th>
+                            <th>Expiry Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="uniqueCodeTableBody">
+                        <!-- Active codes will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- System Settings Section -->
+        <div id="system-settings" class="content-section">
+            <h2 class="text-3xl font-bold mb-6">System Settings</h2>
+            <div class="card p-6">
+                <h3 class="text-xl font-semibold mb-4">Global Settings</h3>
+                <label class="block text-left mb-1">Default CPM Rate:</label>
+                <input type="number" id="defaultCpmRate" step="0.01" class="input-field" required>
+                <label class="block text-left mb-1">Minimum Withdrawal Amount ($USD):</label>
+                <input type="number" id="minWithdrawalAmount" step="0.01" class="input-field" required>
+                <button id="saveSettingsBtn" class="btn-action">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Box -->
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button onclick="closeMessageBox()">OK</button>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'YOUR_HEROKU_BACKEND_URL'; // !!! IMPORTANT: Replace with your deployed Heroku backend URL !!!
+        let adminLoggedIn = false; // Flag to track admin login state
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const isAdmin = localStorage.getItem('isAdmin');
+
+            // Check if already logged in as admin
+            if (token && isAdmin === 'true') {
+                adminLoggedIn = true;
+                showAdminPanel();
+                loadSectionData('dashboard'); // Load dashboard by default
+            } else {
+                // Show admin login form
+                document.getElementById('adminLogin').classList.add('active');
+                document.getElementById('sidebar').style.display = 'none'; // Hide sidebar initially
+                document.getElementById('mainContent').style.marginLeft = '0'; // No margin for login form
+            }
+
+            // Admin Login Form Submission
+            document.getElementById('adminLoginForm').addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const username = document.getElementById('adminUsername').value;
+                const password = document.getElementById('adminPassword').value;
+                const errorDisplay = document.getElementById('adminLoginError');
+
+                errorDisplay.classList.add('hidden'); // Clear previous errors
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/admin/login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ username, password }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        localStorage.setItem('token', data.token); // Store admin token
+                        localStorage.setItem('isAdmin', true);
+                        adminLoggedIn = true;
+                        showMessage('Admin login successful! Redirecting...');
+                        setTimeout(() => {
+                            showAdminPanel();
+                            loadSectionData('dashboard');
+                        }, 1000);
+                    } else {
+                        errorDisplay.textContent = data.message || 'Invalid username or password.';
+                        errorDisplay.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error('Admin login error:', error);
+                    errorDisplay.textContent = 'An unexpected error occurred. Please try again.';
+                    errorDisplay.classList.remove('hidden');
+                }
+            });
+
+            // Sidebar navigation
+            const navLinks = document.querySelectorAll('.sidebar a');
+            const contentSections = document.querySelectorAll('.content-section');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (this.id === 'adminLogoutButton') {
+                        adminLogout();
+                        return;
+                    }
+
+                    // Only allow navigation if logged in
+                    if (!adminLoggedIn) {
+                        showMessage('Please log in as admin first.');
+                        return;
+                    }
+
+                    navLinks.forEach(nav => nav.classList.remove('active'));
+                    contentSections.forEach(section => {
+                        // Keep adminLogin section hidden for login form
+                        if (section.id !== 'adminLogin') {
+                            section.classList.remove('active');
+                        }
+                    });
+
+                    this.classList.add('active');
+                    const sectionId = this.dataset.section;
+                    document.getElementById(sectionId).classList.add('active');
+
+                    if (window.innerWidth < 768) {
+                        sidebar.classList.remove('active');
+                    }
+
+                    loadSectionData(sectionId);
+                });
+            });
+
+            // Add event listeners for admin actions
+            document.getElementById('searchUsersBtn').addEventListener('click', searchUsers);
+            document.getElementById('saveUserBtn').addEventListener('click', saveUserDetails);
+            document.getElementById('generateCodesBtn').addEventListener('click', generateUniqueCodes);
+            document.getElementById('saveSettingsBtn').addEventListener('click', saveSystemSettings);
+
+            // Fetch initial data for sections if already logged in
+            if (adminLoggedIn) {
+                fetchAdminDashboardData();
+                fetchUsers();
+                fetchWithdrawalRequests();
+                fetchUniqueCodes();
+                fetchSystemSettings();
+            }
+        });
+
+        function showAdminPanel() {
+            document.getElementById('adminLogin').classList.remove('active');
+            document.getElementById('sidebar').style.display = 'flex'; // Show sidebar
+            // Adjust main content margin for desktop, if sidebar is visible
+            if (window.innerWidth >= 768) {
+                document.getElementById('mainContent').style.marginLeft = '280px';
+            }
+            document.getElementById('dashboard').classList.add('active'); // Show dashboard
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('isAdmin');
+            adminLoggedIn = false;
+            showMessage('Logging out...', () => {
+                window.location.href = 'admin.html'; // Redirect to admin login
+            });
+        }
+
+        async function loadSectionData(sectionId) {
+            if (!adminLoggedIn) return; // Prevent data loading if not logged in
+
+            if (sectionId === 'dashboard') {
+                fetchAdminDashboardData();
+            } else if (sectionId === 'user-management') {
+                fetchUsers();
+            } else if (sectionId === 'withdrawal-management') {
+                fetchWithdrawalRequests();
+            } else if (sectionId === 'unique-codes') {
+                fetchUniqueCodes();
+            } else if (sectionId === 'system-settings') {
+                fetchSystemSettings();
+            }
+        }
+
+        async function fetchAdminDashboardData() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/admin/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('totalUsers').textContent = data.totalUsers || 0;
+                    document.getElementById('dailyRevenue').textContent = `$${(data.dailyRevenue || 0).toFixed(2)}`;
+                    document.getElementById('monthlyRevenue').textContent = `$${(data.monthlyRevenue || 0).toFixed(2)}`;
+                    document.getElementById('totalLinks').textContent = data.totalLinks || 0;
+                    document.getElementById('pendingWithdrawalsCount').textContent = data.pendingWithdrawalsCount || 0;
+                } else {
+                    showMessage(`Failed to fetch dashboard data: ${data.message || 'Error'}`);
+                }
+            } catch (error) {
+                console.error('Error fetching admin dashboard data:', error);
+                showMessage('Could not load dashboard data.');
+            }
+        }
+
+        async function fetchUsers(searchQuery = '') {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/admin/users${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ''}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                const tableBody = document.getElementById('userTableBody');
+                tableBody.innerHTML = '';
+                if (response.ok && data.users && data.users.length > 0) {
+                    data.users.forEach(user => {
+                        const row = tableBody.insertRow();
+                        row.insertCell().textContent = user._id;
+                        row.insertCell().textContent = user.email;
+                        row.insertCell().textContent = user.telegramUsername;
+                        row.insertCell().textContent = `$${(user.balance || 0).toFixed(2)}`;
+                        row.insertCell().textContent = user.cpmRate || 0;
+                        const actionsCell = row.insertCell();
+                        actionsCell.innerHTML = `
+                            <button class="btn-action text-sm py-1 px-2 mr-2" onclick="editUser('${user._id}', '${user.fullName}', '${user.email}', '${user.telegramUsername}', ${user.balance}, ${user.cpmRate})">Edit</button>
+                            <button class="btn-danger text-sm py-1 px-2" onclick="toggleUserBlock('${user._id}', ${user.isBlocked})">${user.isBlocked ? 'Unblock' : 'Block'}</button>
+                        `;
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-400">No users found.</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error fetching users:', error);
+                showMessage('Could not load user data.');
+            }
+        }
+
+        function searchUsers() {
+            const searchQuery = document.getElementById('userSearchInput').value;
+            fetchUsers(searchQuery);
+        }
+
+        function editUser(userId, fullName, email, telegramUsername, balance, cpmRate) {
+            document.getElementById('editUserId').value = userId;
+            document.getElementById('editFullName').value = fullName;
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editTelegramUsername').value = telegramUsername;
+            document.getElementById('editBalance').value = balance;
+            document.getElementById('editCpmRate').value = cpmRate;
+            document.getElementById('editUserModal').style.display = 'block';
+        }
+
+        async function saveUserDetails() {
+            const userId = document.getElementById('editUserId').value;
+            const fullName = document.getElementById('editFullName').value;
+            const email = document.getElementById('editEmail').value;
+            const telegramUsername = document.getElementById('editTelegramUsername').value;
+            const balance = parseFloat(document.getElementById('editBalance').value);
+            const cpmRate = parseFloat(document.getElementById('editCpmRate').value);
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ fullName, email, telegramUsername, balance, cpmRate })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage('User details updated successfully!');
+                    closeMessageBox();
+                    fetchUsers(); // Refresh user list
+                } else {
+                    showMessage(`Failed to update user: ${data.message || 'Error'}`);
+                }
+            } catch (error) {
+                console.error('Error saving user details:', error);
+                showMessage('Could not save user details.');
+            }
+        }
+
+        async function toggleUserBlock(userId, isBlocked) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/block`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ isBlocked: !isBlocked })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage(`User ${isBlocked ? 'unblocked' : 'blocked'} successfully!`);
+                    fetchUsers(); // Refresh user list
+                } else {
+                    showMessage(`Failed to toggle block status: ${data.message || 'Error'}`);
+                }
+            } catch (error) {
+                console.error('Error toggling user block:', error);
+                showMessage('Could not toggle user block status.');
+            }
+        }
+
+        async function fetchWithdrawalRequests() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/admin/withdrawals`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                const tableBody = document.getElementById('withdrawalTableBody');
+                tableBody.innerHTML = '';
+                if (response.ok && data.withdrawals && data.withdrawals.length > 0) {
+                    data.withdrawals.forEach(req => {
+                        const row = tableBody.insertRow();
+                        // Assuming user email is populated from the backend for display purposes
+                        row.insertCell().textContent = req.userEmail || 'N/A';
+                        row.insertCell().textContent = `$${(req.amount || 0).toFixed(2)}`;
+                        const usdtAddressCell = row.insertCell();
+                        usdtAddressCell.innerHTML = `<span class="break-all">${req.usdtAddress}</span>`;
+                        row.insertCell().textContent = new Date(req.requestDate).toLocaleDateString();
+                        row.insertCell().textContent = req.status;
+                        const actionsCell = row.insertCell();
+                        if (req.status === 'Pending') {
+                            actionsCell.innerHTML = `
+                                <button class="btn-action bg-green-600 hover:bg-green-700 text-sm py-1 px-2 mr-2" onclick="processWithdrawal('${req._id}', 'Approved')">Approve</button>
+                                <button class="btn-danger text-sm py-1 px-2" onclick="processWithdrawal('${req._id}', 'Rejected')">Reject</button>
+                            `;
+                        } else {
+                            actionsCell.textContent = 'Processed';
+                        }
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-gray-400">No withdrawal requests found.</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error fetching withdrawal requests:', error);
+                showMessage('Could not load withdrawal requests.');
+            }
+        }
+
+        async function processWithdrawal(requestId, status) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/admin/withdrawals/${requestId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage(`Withdrawal request ${status.toLowerCase()} successfully!`);
+                    fetchWithdrawalRequests(); // Refresh list
+                    fetchAdminDashboardData(); // Update pending count
+                } else {
+                    showMessage(`Failed to process withdrawal: ${data.message || 'Error'}`);
+                }
+            } catch (error) {
+                console.error('Error processing withdrawal:', error);
+                showMessage('Could not process withdrawal request.');
+            }
+        }
+
+        async function generateUniqueCodes() {
+            const numCodes = parseInt(document.getElementById('numCodesToGenerate').value);
+            if (isNaN(numCodes) || numCodes < 1 || numCodes > 5) {
+                showMessage('Please enter a number between 1 and 5.');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/admin/unique-codes/generate`, { // Assuming a /generate endpoint
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ count: numCodes })
+                });
+                const data = await response.json();
+                const displayArea = document.getElementById('generatedCodesDisplay');
+                displayArea.innerHTML = ''; // Clear previous codes
+
+                if (response.ok && data.codes && data.codes.length > 0) {
+                    let codesHtml = '<p class="font-bold text-lg mb-2">Generated Codes:</p><ul class="list-disc list-inside">';
+                    data.codes.forEach(code => {
+                        codesHtml += `<li class="font-mono bg-gray-700 px-3 py-1 rounded-md inline-block mr-2 mb-2">${code}</li>`;
+                    });
+                    codesHtml += '</ul>';
+                    displayArea.innerHTML = codesHtml;
+                    showMessage(`${data.codes.length} unique codes generated!`);
+                    fetchUniqueCodes(); // Refresh active codes list
+                } else {
+                    showMessage(`Failed to generate codes: ${data.message || 'Error'}`);
+                }
+            } catch (error) {
+                console.error('Error generating unique codes:', error);
+                showMessage('Could not generate unique codes.');
+            }
+        }
+
+        async function fetchUniqueCodes() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/admin/unique-codes`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                const tableBody = document.getElementById('uniqueCodeTableBody');
+                tableBody.innerHTML = '';
+                if (response.ok && data.codes && data.codes.length > 0) {
+                    data.codes.forEach(codeObj => {
+                        const row = tableBody.insertRow();
+                        row.insertCell().textContent = codeObj.code;
+                        row.insertCell().textContent = codeObj.isActive ? 'Yes' : 'No';
+                        row.insertCell().textContent = new Date(codeObj.createdDate).toLocaleDateString();
+                        row.insertCell().textContent = codeObj.expiryDate ? new Date(codeObj.expiryDate).toLocaleDateString() : 'Never';
+                        const actionsCell = row.insertCell();
+                        actionsCell.innerHTML = `
+                            <button class="btn-action text-sm py-1 px-2 mr-2" onclick="toggleUniqueCodeStatus('${codeObj._id}', ${codeObj.isActive})">${codeObj.isActive ? 'Deactivate' : 'Activate'}</button>
+                            <button class="btn-danger text-sm py-1 px-2" onclick="deleteUniqueCode('${codeObj._id}')">Delete</button>
+                        `;
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-400">No unique codes found.</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error fetching unique codes:', error);
+                showMessage('Could not load unique codes.');
+            }
+        }
+
+        async function toggleUniqueCodeStatus(codeId, isActive) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/admin/unique-codes/${codeId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ isActive: !isActive })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage(`Code ${isActive ? 'deactivated' : 'activated'} successfully!`);
+                    fetchUniqueCodes(); // Refresh list
+                } else {
+                    showMessage(`Failed to change code status: ${data.message || 'Error'}`);
+                }
+            } catch (error) {
+                console.error('Error toggling unique code status:', error);
+                showMessage('Could not change unique code status.');
+            }
+        }
+
+        async function deleteUniqueCode(codeId) {
+            // Implement confirmation message here
+            showMessageBox(`Are you sure you want to delete this unique code?`, () => confirmDeleteUniqueCode(codeId), true);
+        }
+
+        async function confirmDeleteUniqueCode(codeId) {
+            closeMessageBox(); // Close the confirmation message
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/admin/unique-codes/${codeId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage('Unique code deleted successfully!');
+                    fetchUniqueCodes(); // Refresh list
+                } else {
+                    showMessage(`Failed to delete code: ${data.message || 'Error'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting unique code:', error);
+                showMessage('Could not delete unique code.');
+            }
+        }
+
+        async function fetchSystemSettings() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/admin/settings`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('defaultCpmRate').value = data.defaultCPM || 0;
+                    document.getElementById('minWithdrawalAmount').value = data.minWithdrawal || 0;
+                } else {
+                    showMessage(`Failed to fetch settings: ${data.message || 'Error'}`);
+                }
+            } catch (error) {
+                console.error('Error fetching system settings:', error);
+                showMessage('Could not load system settings.');
+            }
+        }
+
+        async function saveSystemSettings() {
+            const defaultCPM = parseFloat(document.getElementById('defaultCpmRate').value);
+            const minWithdrawal = parseFloat(document.getElementById('minWithdrawalAmount').value);
+
+            if (isNaN(defaultCPM) || defaultCPM < 0 || isNaN(minWithdrawal) || minWithdrawal < 0) {
+                showMessage('Please enter valid positive numbers for settings.');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/api/admin/settings`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ defaultCPM, minWithdrawal })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage('System settings updated successfully!');
+                } else {
+                    showMessage(`Failed to save settings: ${data.message || 'Error'}`);
+                }
+            } catch (error) {
+                console.error('Error saving system settings:', error);
+                showMessage('Could not save system settings.');
+            }
+        }
+
+        // Message Box Functions (copied from user dashboard)
+        function showMessageBox(message, onConfirm = null, isConfirm = false) {
+            const msgBox = document.getElementById('messageBox');
+            const msgText = document.getElementById('messageText');
+            const okButton = msgBox.querySelector('button');
+
+            msgText.textContent = message;
+            okButton.onclick = () => {
+                closeMessageBox();
+                if (onConfirm && !isConfirm) {
+                    onConfirm();
+                }
+            };
+
+            if (isConfirm) {
+                const cancelButton = document.createElement('button');
+                cancelButton.textContent = 'Cancel';
+                cancelButton.className = 'btn-action bg-gray-500 hover:bg-gray-600 text-sm py-1 px-2 ml-2';
+                cancelButton.onclick = () => closeMessageBox();
+                msgBox.appendChild(cancelButton);
+                okButton.textContent = 'Confirm';
+                okButton.onclick = () => onConfirm();
+            } else {
+                if (msgBox.querySelector('.btn-action.bg-gray-500')) {
+                    msgBox.querySelector('.btn-action.bg-gray-500').remove();
+                }
+                okButton.textContent = 'OK';
+            }
+
+            msgBox.style.display = 'block';
+        }
+
+        function closeMessageBox() {
+            document.getElementById('messageBox').style.display = 'none';
+            const msgBox = document.getElementById('messageBox');
+            const cancelButton = msgBox.querySelector('.btn-action.bg-gray-500');
+            if (cancelButton) {
+                cancelButton.remove();
+            }
+        }
+    </script>
+</body>
+</html>
