@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkEarn - Monetize Your Media</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right top, #6b46c1, #805ad5, #9f7aea); /* Softer purple gradient */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .section-gradient {
+            background: linear-gradient(to right bottom, #805ad5, #9f7aea, #b794f4); /* Lighter, complementary gradient */
+            border-radius: 1.5rem; /* More rounded */
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary {
+            background: linear-gradient(to right, #4c51bf, #667eea); /* Blueish gradient for buttons */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem; /* Rounded button corners */
+            font-weight: 600;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        .card {
+            background-color: rgba(255, 255, 255, 0.15); /* Slightly transparent white */
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px); /* Frosted glass effect */
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="py-4 shadow-lg">
+        <div class="container flex justify-between items-center">
+            <div class="text-3xl font-bold">LinkEarn</div>
+            <nav>
+                <a href="login.html" class="btn-primary mr-2">Login</a>
+                <a href="signup.html" class="btn-primary">Sign Up</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <!-- Hero Section -->
+        <section class="container text-center py-20">
+            <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-6">
+                Monetize Your Media Sharing <br class="hidden md:inline"> Effortlessly.
+            </h1>
+            <p class="text-xl md:text-2xl opacity-90 mb-10 max-w-3xl mx-auto">
+                Turn every share into an earning opportunity. LinkEarn integrates seamlessly with Telegram to deliver content and revenue.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <a href="signup.html" class="btn-primary text-xl">Get Started Now</a>
+                <a href="#how-it-works" class="btn-primary bg-transparent border border-white hover:bg-white hover:text-purple-700 text-xl">Learn More</a>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section id="how-it-works" class="container section-gradient">
+            <h2 class="text-4xl font-bold mb-8 text-center">How It Works</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+                <div class="card p-6">
+                    <img src="https://placehold.co/100x100/ffffff/000000?text=1" alt="Step 1" class="mx-auto mb-4 rounded-lg">
+                    <h3 class="text-2xl font-semibold mb-2">Connect Bot</h3>
+                    <p class="opacity-90">Securely link your Telegram account via our bot API.</p>
+                </div>
+                <div class="card p-6">
+                    <img src="https://placehold.co/100x100/ffffff/000000?text=2" alt="Step 2" class="mx-auto mb-4 rounded-lg">
+                    <h3 class="text-2xl font-semibold mb-2">Upload & Generate</h3>
+                    <p class="opacity-90">Send your video or media to our bot, and instantly get a monetized link.</p>
+                </div>
+                <div class="card p-6">
+                    <img src="https://placehold.co/100x100/ffffff/000000?text=3" alt="Step 3" class="mx-auto mb-4 rounded-lg">
+                    <h3 class="text-2xl font-semibold mb-2">Share & Earn</h3>
+                    <p class="opacity-90">Share your links. Viewers see a short ad, then access your content, and you earn.</p>
+                </div>
+                <div class="card p-6">
+                    <img src="https://placehold.co/100x100/ffffff/000000?text=4" alt="Step 4" class="mx-auto mb-4 rounded-lg">
+                    <h3 class="text-2xl font-semibold mb-2">Get Paid</h3>
+                    <p class="opacity-90">Withdraw your earnings directly to your USDT BEP20 wallet.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="container section-gradient">
+            <h2 class="text-4xl font-bold mb-8 text-center">Powerful Features</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold mb-2">High Earning Potential</h3>
+                    <p class="opacity-90">Maximize your revenue with competitive CPM rates on every view.</p>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold mb-2">Seamless Telegram Integration</h3>
+                    <p class="opacity-90">Our bot makes uploading, linking, and sharing incredibly easy and intuitive.</p>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold mb-2">Real-time Statistics</h3>
+                    <p class="opacity-90">Track your views, earnings, and link performance with up-to-the-minute data.</p>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold mb-2">Secure & Transparent Payments</h3>
+                    <p class="opacity-90">Withdraw your earnings confidently to your USDT BEP20 address, with clear transaction history.</p>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold mb-2">User-Friendly Dashboard</h3>
+                    <p class="opacity-90">Manage your links, view earnings, and update settings from an intuitive interface.</p>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold mb-2">Dedicated Support</h3>
+                    <p class="opacity-90">Our support team and help bot are always ready to assist you.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-8 text-center text-gray-200">
+        <div class="container">
+            <p class="mb-4">&copy; 2025 LinkEarn. All rights reserved.</p>
+            <nav class="flex justify-center space-x-6">
+                <a href="#" class="hover:text-white">Terms of Service</a>
+                <a href="#" class="hover:text-white">Privacy Policy</a>
+                <a href="mailto:support@linkearn.com" class="hover:text-white">Contact Us</a>
+            </nav>
+        </div>
+    </footer>
+</body>
+</html>
