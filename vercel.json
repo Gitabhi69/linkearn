@@ -22,7 +22,7 @@
   ],
   "functions": {
     "api/index.js": {
-      "runtime": "nodejs20.x"
+      "runtime": "nodejs15.x"
     }
   },
   "build": {
