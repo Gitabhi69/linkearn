@@ -127,6 +127,9 @@
         .input-field::placeholder {
             color: rgba(255, 255, 255, 0.7);
         }
+        .input-field:focus {
+            border-color: #a78bfa; /* Focus color */
+        }
         .message-box {
             position: fixed;
             top: 50%;
@@ -166,6 +169,22 @@
         .text-gray-400 {
             color: #a0aec0;
         }
+        .icon-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .icon-container svg {
+            width: 32px;
+            height: 32px;
+            color: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -192,15 +211,24 @@
         <div id="statistics" class="content-section active">
             <h2 class="text-3xl font-bold mb-6">Statistics</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <div class="card">
+                <div class="card text-center">
+                    <div class="icon-container">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dollar-sign"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </div>
                     <h3 class="text-xl font-semibold mb-2">Today's Revenue (IST)</h3>
                     <p class="text-4xl font-bold text-green-400" id="todayRevenue">$0.00</p>
                 </div>
-                <div class="card">
+                <div class="card text-center">
+                    <div class="icon-container">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wallet"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h12a2 2 0 0 1 0 4H5a2 2 0 0 0 0 4h12a2 2 0 0 0 2-2v-3"/><path d="M10 12h.01"/></svg>
+                    </div>
                     <h3 class="text-xl font-semibold mb-2">Current Balance</h3>
                     <p class="text-4xl font-bold text-blue-400" id="currentBalance">$0.00</p>
                 </div>
-                <div class="card">
+                <div class="card text-center">
+                    <div class="icon-container">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </div>
                     <h3 class="text-xl font-semibold mb-2">Total Views</h3>
                     <p class="text-4xl font-bold" id="totalViews">0</p>
                 </div>
