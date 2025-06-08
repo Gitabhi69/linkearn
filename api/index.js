@@ -21,7 +21,7 @@ const { validateInitData } = require('./middleware/initDataValidation');
 
 // Utils (adjusted paths for Vercel's `api` directory)
 const { sendLog } = require('./utils/telegramLogger'); // Vercel logger just logs to console
-const { generateUniqueCode, getStartOfISTDay, isValidUsdtAddress } = require('./utils/helpers');
+const { generateUniqueCode, getStartOfISTDay, isValidUsdtAddress, generateShortUniqueId } = require('./utils/helpers'); // Added generateShortUniqueId here
 
 // Initialize Express App
 const app = express();
@@ -31,12 +31,44 @@ app.use(cors()); // Enable CORS for frontend communication
 // Initialize API Key Cache (5 minutes expiry for one-time API key)
 const apiKeyCache = new NodeCache({ stdTTL: 300, checkperiod: 60 }); // 300 seconds = 5 minutes
 
+// Telegram Bot (Only needed if this Vercel function will also handle bot updates via webhooks)
+// If your bot is entirely on Heroku, you might remove this.
+// But for Vercel, it often serves webhook functions or needs to send messages.
+const { Telegraf } = require('telegraf');
+const bot = new Telegraf(process.env.BOT_TOKEN);
+initTelegramLogger(bot); // Initialize the logger with the bot instance
+
 // MongoDB Connection
 // On Vercel, this connection might be initialized on each serverless function invocation.
 // Mongoose caches connections, so it should be efficient.
 mongoose.connect(process.env.MONGODB_URI)
     .then(async () => {
         console.log('MongoDB Connected (Vercel API)');
+
+        // !!! CRITICAL: Forcefully drop the index BEFORE creating it to avoid conflicts !!!
+        // This is a last resort to ensure the index is recreated with the correct sparse property.
+        try {
+            await User.collection.dropIndex('telegramChatId_1').catch(err => {
+                // Catch error if index doesn't exist (code 27), which is fine. Log other errors.
+                if (err.code !== 27) {
+                    console.warn('Could not drop telegramChatId_1 index (might not exist or other issue):', err.message);
+                } else {
+                    console.log('telegramChatId_1 index not found, no need to drop.');
+                }
+            });
+            console.log('Attempted to drop existing telegramChatId_1 index.');
+
+            await User.collection.createIndex(
+                { telegramChatId: 1 }, // Index on telegramChatId in ascending order
+                { unique: true, sparse: true, name: 'telegramChatId_1' } // Ensure unique and sparse
+            );
+            console.log('Ensured telegramChatId_1 index is unique and sparse.');
+        } catch (indexError) {
+            console.error('CRITICAL: Failed to create telegramChatId_1 index even after trying to drop it:', indexError.message);
+            // This would indicate a very serious MongoDB issue or configuration problem.
+        }
+
+
         // Ensure default admin user exists (for initial login)
         const adminEmail = process.env.ADMIN_EMAIL || 'admin@linkearn.com';
         const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
@@ -149,6 +181,7 @@ app.post('/api/signup', async (req, res) => {
             cpmRate: defaultCPM,
             isAdmin: false, // Ensure new users are not admins
             isBlocked: false, // Ensure new users are not blocked
+            // telegramChatId is NOT explicitly set here, so default: null and sparse: true will apply correctly.
         });
 
         sendLog(`New User Registered: ${user.email} (${user.telegramUsername})`);
@@ -431,14 +464,14 @@ app.put('/api/user/settings/profile', protect, async (req, res) => {
 
         // Check for unique fields if they are being changed
         if (email && email !== user.email) {
-            const existingEmailUser = await User.findOne({ email });
+            const existingEmailUser = await User.findOne({ email, _id: { $ne: user._id } });
             if (existingEmailUser) {
                 return res.status(400).json({ message: 'Email already in use.', fieldErrors: { email: 'This email is already registered.' } });
             }
             user.email = email;
         }
         if (telegramUsername && telegramUsername !== user.telegramUsername) {
-            const existingTelegramUser = await User.findOne({ telegramUsername });
+            const existingTelegramUser = await User.findOne({ telegramUsername, _id: { $ne: user._id } });
             if (existingTelegramUser) {
                 return res.status(400).json({ message: 'Telegram username already in use.', fieldErrors: { telegramUsername: 'This Telegram username is already registered.' } });
             }
@@ -462,10 +495,12 @@ app.put('/api/user/settings/profile', protect, async (req, res) => {
 
 // @route   POST /api/admin/login
 // @desc    Authenticate admin
-// @access  Public
+// @access  Public (for initial admin login)
 app.post('/api/admin/login', async (req, res) => {
     const { username, password } = req.body; // Using 'username' for admin login form
 
+    // For simplicity, using hardcoded admin email and password.
+    // In production, this should be managed through proper admin user accounts.
     const adminEmail = process.env.ADMIN_EMAIL || 'admin@linkearn.com';
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
 
@@ -801,9 +836,9 @@ app.get('/api/admin/settings', protect, adminProtect, async (req, res) => {
 app.put('/api/admin/settings', protect, adminProtect, async (req, res) => {
     const { minWithdrawal, defaultCPM } = req.body;
     try {
-        const settings = await AdminSetting.findById('globalSettings');
+        let settings = await AdminSetting.findById('globalSettings');
         if (!settings) {
-            return res.status(404).json({ message: 'Admin settings not found.' });
+            settings = await AdminSetting.create({ _id: 'globalSettings' });
         }
         settings.minWithdrawal = typeof minWithdrawal === 'number' ? minWithdrawal : settings.minWithdrawal;
         settings.defaultCPM = typeof defaultCPM === 'number' ? defaultCPM : settings.defaultCPM;
@@ -813,7 +848,182 @@ app.put('/api/admin/settings', protect, adminProtect, async (req, res) => {
         res.json({ message: 'System settings updated successfully!', settings });
     } catch (error) {
         console.error('Error updating admin settings:', error);
-        res.status(500).json({ message: 'Failed to update system settings.' });
+        res.status(500).json({ message: 'Failed to update admin settings.' });
+    }
+});
+
+
+/* ------------------------------------------------------------- */
+/* TELEGRAM BOT COMMANDS AND MEDIA HANDLING (for Vercel Webhook) */
+/* ------------------------------------------------------------- */
+
+// /start command - used for API key validation and linking Telegram user
+bot.start(async (ctx) => {
+    const payload = ctx.startPayload; // Get payload from deep link if any (e.g., from `startapp` in Mini App)
+    if (payload && payload.startsWith('connect_')) { // This is for user connecting via API key from website
+        const apiKey = payload.replace('connect_', '');
+        const userId = apiKeyCache.get(apiKey); // Get userId from cache using API key
+
+        if (userId) {
+            try {
+                const user = await User.findById(userId);
+                if (user && !user.telegramChatId) { // If user exists and not already linked
+                    user.telegramChatId = ctx.chat.id.toString();
+                    // Invalidate the API key as it's one-time use
+                    apiKeyCache.del(apiKey);
+                    user.apiKey = null; // Clear from DB as well
+                    user.apiKeyGeneratedAt = null;
+                    await user.save();
+                    sendLog(`User Connected Bot: ${user.email} (Chat ID: ${ctx.chat.id})`);
+                    ctx.reply(`🎉 Congratulations! Your LinkEarn account is now connected. You can now send media to me to generate monetized links!`);
+                } else if (user && user.telegramChatId) {
+                    ctx.reply(`Your account is already linked to this Telegram user.`);
+                } else {
+                    ctx.reply(`Invalid or expired API key. Please generate a new one from your LinkEarn dashboard.`);
+                }
+            } catch (error) {
+                console.error('Error linking user telegram:', error);
+                ctx.reply('An error occurred while linking your account. Please try again.');
+            }
+        } else {
+            ctx.reply(`Welcome to LinkEarn! To start earning, please sign up on our website and connect your account using the API key. Visit our website at: [linkearn.com](https://your-website-url.vercel.app/)`);
+        }
+    } else if (payload && payload.startsWith('recieve_')) { // This is for viewers arriving from a Mini App link
+        // This scenario is handled by the Telegram Mini App directly calling /api/count-view
+        // The bot itself doesn't need to do much here, just a welcome or redirect to Mini App
+        const uniqueId = payload.replace('recieve_', '');
+        ctx.reply(`Welcome to LinkEarn! Please open the content via the provided link in your browser or Telegram app to watch the ad and receive media.`);
+        // In a real scenario, you might construct the full Mini App link here again and send it back
+        // Or tell the user to go back to the app that opened the link.
+        // For simplicity, the Mini App directly handles view counting and media delivery.
+    }
+    else {
+        ctx.reply(`Welcome to LinkEarn! To start earning, please sign up on our website and connect your account using the API key. Visit our website at: [linkearn.com](https://your-website-url.vercel.app/)`);
+    }
+});
+
+// /help command
+bot.help((ctx) => ctx.reply(`
+Welcome to LinkEarn!
+Here's how it works:
+1. Go to your dashboard on [linkearn.com](https://your-website-url.vercel.app/) and generate an API key.
+2. Send /start to this bot with your API key to connect your account.
+3. Send me photos, videos, or documents to generate monetized links.
+4. Share your links and earn money when people view ads!
+
+For support, contact @helpbot (replace with actual help bot if different).
+`));
+
+// /views command (for admins only)
+bot.command('views', async (ctx) => {
+    try {
+        const user = await User.findOne({ telegramChatId: ctx.chat.id.toString() });
+        if (user && user.isAdmin) {
+            ctx.reply(`Admin Total Views: ${user.totalViews}`); // Assuming admin's totalViews is their own.
+        } else {
+            ctx.reply('You are not authorized to use this command.');
+        }
+    } catch (error) {
+        console.error('Error in /views command:', error);
+        ctx.reply('An error occurred while fetching views.');
+    }
+});
+
+// /delete VIDEO_ID command
+bot.command('delete', async (ctx) => {
+    const args = ctx.message.text.split(' ');
+    if (args.length < 2) {
+        return ctx.reply('Please specify the unique ID of the video/link to delete. Example: /delete ABCDE');
+    }
+    const uniqueIdToDelete = args[1].toUpperCase();
+
+    try {
+        const user = await User.findOne({ telegramChatId: ctx.chat.id.toString() });
+        if (!user) {
+            return ctx.reply('You must connect your LinkEarn account first. Use /start.');
+        }
+
+        const link = await Link.findOne({ uniqueId: uniqueIdToDelete, userId: user._id });
+
+        if (!link) {
+            return ctx.reply('Link not found or you are not the owner of this link.');
+        }
+
+        link.isActive = false; // Mark as inactive
+        await link.save();
+        sendLog(`Bot Action: User ${user.email} deactivated link ${uniqueIdToDelete}`);
+        ctx.reply(`Link ${uniqueIdToDelete} has been successfully deleted (marked inactive).`);
+
+    } catch (error) {
+        console.error('Error in /delete command:', error);
+        ctx.reply('An error occurred while deleting the link. Please try again.');
+    }
+});
+
+// Handle incoming media messages (photos, videos, documents)
+bot.on(['photo', 'video', 'document'], async (ctx) => {
+    try {
+        const user = await User.findOne({ telegramChatId: ctx.chat.id.toString() });
+        if (!user) {
+            return ctx.reply('Please connect your LinkEarn account first using the /start command and your API key from the dashboard.');
+        }
+        if (user.isBlocked) {
+            return ctx.reply('Your account is blocked and cannot generate new links. Please contact support.');
+        }
+
+        let fileId;
+        if (ctx.message.photo) {
+            fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id; // Get highest quality photo
+        } else if (ctx.message.video) {
+            fileId = ctx.message.video.file_id;
+        } else if (ctx.message.document) {
+            fileId = ctx.message.document.file_id;
+        } else {
+            return ctx.reply('Unsupported media type. Please send a photo, video, or document.');
+        }
+
+        // Forward media to storage channel
+        const storageChannelId = process.env.STORAGE_CHANNEL_ID;
+        if (!storageChannelId) {
+            sendLog('STORAGE_CHANNEL_ID is not set in environment variables!');
+            return ctx.reply('Bot configuration error: Storage channel not set.');
+        }
+
+        try {
+            // Forward the message to the storage channel
+            await ctx.telegram.forwardMessage(storageChannelId, ctx.chat.id, ctx.message.message_id);
+            sendLog(`Media forwarded to storage channel from user: ${user.email}`);
+        } catch (forwardError) {
+            console.error('Error forwarding media to storage channel:', forwardError);
+            sendLog(`Failed to forward media for user ${user.email}: ${forwardError.message}`);
+            return ctx.reply('Failed to store your media. Please check bot permissions for the storage channel.');
+        }
+
+        // Generate unique ID and Mini App Link
+        const uniqueId = generateShortUniqueId();
+        const botUsername = process.env.BOT_PUBLIC_USERNAME; // Your bot's @username
+        if (!botUsername) {
+            sendLog('BOT_PUBLIC_USERNAME is not set in environment variables!');
+            return ctx.reply('Bot configuration error: Bot username not set.');
+        }
+        const generatedLink = `https://t.me/${botUsername}/videos?startapp=recieve_${uniqueId}`; // Example format for Mini App
+
+        // Store link in MongoDB
+        const link = await Link.create({
+            userId: user._id,
+            uniqueId,
+            mediaFileId: fileId,
+            generatedLink,
+            createdDate: new Date(),
+            isActive: true
+        });
+
+        sendLog(`Link Generated: User ${user.email}, Unique ID: ${uniqueId}, Link: ${generatedLink}`);
+        ctx.reply(`Your monetized link is ready: ${generatedLink}\n\nShare it to start earning!`);
+
+    } catch (error) {
+        console.error('Error handling media message:', error);
+        ctx.reply('An error occurred while processing your media. Please try again.');
     }
 });
 
@@ -839,14 +1049,15 @@ app.post('/api/count-view', validateInitData, async (req, res) => {
         const alreadyViewed = link.viewers.some(v => v.viewerTelegramId === viewerTelegramId);
         if (alreadyViewed) {
             console.log(`View attempt: Viewer ${viewerTelegramId} already viewed link ${uniqueId}`);
-            // Respond with success so Mini App can proceed to deliver media if applicable
-            return res.json({ message: 'View already counted for this user. Media will be delivered (if not already).' });
+            // Still deliver media if they already viewed, but don't count again
+            // Respond with success so Mini App proceeds to deliver media
+            return res.json({ message: 'View already counted for this user. Media will be delivered.' });
         }
 
         const user = await User.findById(link.userId);
         if (!user || user.isBlocked) {
             console.log(`View attempt: User for link ${uniqueId} not found or is blocked.`);
-            return res.status(403).json({ message: 'Associated user account not found or is blocked.' });
+            return res.status(404).json({ message: 'Associated user account not found or is blocked.' });
         }
 
         // Increment view count for the link
@@ -880,8 +1091,7 @@ app.post('/api/count-view', validateInitData, async (req, res) => {
         }
 
         sendLog(`View Counted & Earned: User ${user.email}, Link ${uniqueId}, Viewer ${viewerTelegramId}, Amount $${earningPerView.toFixed(4)}`);
-        // The Mini App will use the success of this call to then trigger the bot for media delivery.
-        res.json({ message: 'View counted successfully!' });
+        res.json({ message: 'View counted successfully! Media will be delivered.' });
 
     } catch (error) {
         console.error('Error counting view:', error);
@@ -890,8 +1100,8 @@ app.post('/api/count-view', validateInitData, async (req, res) => {
 });
 
 // @route   GET /api/media/:uniqueId
-// @desc    Retrieve media file_id for delivery by bot
-// @access  Public (called by Mini App to get file_id)
+// @desc    Retrieve media file_id for delivery
+// @access  Public (called by Mini App after ad completion, or bot based on Mini App signal)
 app.get('/api/media/:uniqueId', async (req, res) => {
     try {
         const uniqueId = req.params.uniqueId;
@@ -907,5 +1117,59 @@ app.get('/api/media/:uniqueId', async (req, res) => {
     }
 });
 
+
+// Public endpoint for handling dynamic links/redirections for content monetization
+// @route   GET /:uniqueId
+// @desc    Handle short link redirection and view counting
+// @access  Public
+app.get('/:uniqueId', async (req, res) => {
+    try {
+        const { uniqueId } = req.params;
+        const link = await Link.findOne({ uniqueId, isActive: true });
+
+        if (!link) {
+            return res.status(404).send('Link not found or inactive.');
+        }
+
+        // Redirect to the original media URL.
+        // The view counting logic is now primarily handled by the Telegram Mini App's call to /api/count-view
+        // This route is purely for redirection if accessed directly via browser.
+        res.redirect(link.originalUrl);
+
+    } catch (error) {
+        console.error('Error handling link redirection:', error);
+        res.status(500).send('Internal server error during redirection.');
+    }
+});
+
+// Telegram Bot Error Handling
+bot.catch((err, ctx) => {
+    console.error(`Ooops, encountered an error for ${ctx.update.update_id}:`, err);
+    sendLog(`Bot Error: ${err.message || 'Unknown error'} in chat ${ctx.chat?.id || 'N/A'}`);
+    ctx.reply('Apologies, something went wrong with the bot. Please try again later.');
+});
+
+
+// Start the bot
+bot.launch();
+console.log('Telegram Bot launched!');
+
+// Enable graceful stop
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+
+// Fallback for non-matching API routes (e.g., if a route doesn't exist)
+app.use('/api/*', (req, res) => {
+    res.status(404).json({ message: 'API Endpoint not found.' });
+});
+
+// Start Express server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+
 // Export the Express app for Vercel Serverless Functions
+// This needs to be at the very end of the file for Vercel to correctly pick it up
 module.exports = app;
