@@ -22,7 +22,8 @@
   ],
   "functions": {
     "api/index.js": {
-      "use": "@vercel/node@3.0.0"
+      // The 'use' property was removed as it caused a schema validation error.
+      // Vercel will now infer the Node.js runtime from your package.json or project settings.
     }
   },
   "build": {
