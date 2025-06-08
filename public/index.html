@@ -22,6 +22,22 @@
             margin: 0 auto;
             padding: 1rem;
         }
+        /* Sticky transparent header */
+        .header-sticky {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: rgba(107, 70, 193, 0.8); /* Slightly transparent background for readability */
+            backdrop-filter: blur(5px); /* Frosted glass effect */
+            transition: background-color 0.3s ease-in-out;
+        }
+        /* Make header fully transparent when at top */
+        .header-transparent {
+            background-color: transparent;
+            backdrop-filter: none;
+            box-shadow: none;
+        }
+        /* Gradient for sections and cards */
         .section-gradient {
             background: linear-gradient(to right bottom, #805ad5, #9f7aea, #b794f4); /* Lighter, complementary gradient */
             border-radius: 1.5rem; /* More rounded */
@@ -61,33 +77,89 @@
             margin-bottom: 1rem;
             color: #ffffff;
         }
-        /* Responsive adjustments for layout */
-        @media (max-width: 768px) {
+
+        /* Mobile Menu styles */
+        .mobile-menu {
+            display: none;
+            flex-direction: column;
+            position: absolute;
+            top: 100%; /* Position below the header */
+            left: 0;
+            width: 100%;
+            background-color: rgba(107, 70, 193, 0.95); /* Slightly darker transparent background */
+            backdrop-filter: blur(8px);
+            padding: 1rem;
+            border-bottom-left-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        .mobile-menu.active {
+            display: flex;
+        }
+        .mobile-menu a {
+            padding: 0.75rem 1rem;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            transition: background-color 0.2s ease;
+            border-radius: 0.5rem;
+        }
+        .mobile-menu a:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        /* Toggle button for mobile */
+        .menu-toggle {
+            display: none; /* Hidden on desktop */
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        @media (max-width: 767px) {
+            .menu-toggle {
+                display: block; /* Show on mobile */
+            }
+            .desktop-nav {
+                display: none; /* Hide desktop nav on mobile */
+            }
             .hero-section-text {
                 font-size: 2.5rem; /* Adjust for smaller screens */
             }
             .hero-section-description {
                 font-size: 1.125rem;
             }
-            .how-it-works-card, .features-card {
-                padding: 1.5rem;
+        }
+        @media (min-width: 768px) {
+            .mobile-menu {
+                display: none !important; /* Ensure it's hidden on desktop */
             }
         }
     </style>
 </head>
 <body>
     <!-- Header -->
-    <header class="py-4 shadow-lg">
-        <div class="container flex justify-between items-center">
+    <header id="mainHeader" class="py-4 header-sticky header-transparent">
+        <div class="container flex justify-between items-center relative">
             <div class="text-3xl font-bold">LinkEarn</div>
-            <nav class="space-x-2 sm:space-x-4">
+            <nav class="desktop-nav space-x-2 sm:space-x-4">
                 <a href="#features" class="text-white hover:text-gray-200">Features</a>
                 <a href="#how-it-works" class="text-white hover:text-gray-200">How It Works</a>
-                <a href="#" class="text-white hover:text-gray-200 hidden sm:inline">Pricing</a>
+                <a href="#" class="text-white hover:text-gray-200">Pricing</a>
                 <a href="login.html" class="btn-primary">Login</a>
                 <a href="signup.html" class="btn-primary">Sign Up</a>
             </nav>
+            <button class="menu-toggle" id="menuToggle">☰</button>
         </div>
+        <!-- Mobile Menu Overlay -->
+        <nav class="mobile-menu" id="mobileMenu">
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#">Pricing</a>
+            <a href="login.html">Login</a>
+            <a href="signup.html">Sign Up</a>
+        </nav>
     </header>
 
     <main class="flex-grow">
@@ -195,5 +267,34 @@
             </nav>
         </div>
     </footer>
+
+    <script>
+        const mainHeader = document.getElementById('mainHeader');
+        const menuToggle = document.getElementById('menuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        // Toggle mobile menu visibility
+        menuToggle.addEventListener('click', () => {
+            mobileMenu.classList.toggle('active');
+        });
+
+        // Close mobile menu when a link is clicked
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+            });
+        });
+
+        // Header transparency and stickiness on scroll
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) { // Adjust scroll threshold as needed
+                mainHeader.classList.remove('header-transparent');
+                mainHeader.classList.add('shadow-lg');
+            } else {
+                mainHeader.classList.add('header-transparent');
+                mainHeader.classList.remove('shadow-lg');
+            }
+        });
+    </script>
 </body>
 </html>
