@@ -183,6 +183,22 @@
             cursor: pointer;
             margin-top: 10px;
         }
+        .icon-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .icon-container svg {
+            width: 32px;
+            height: 32px;
+            color: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -220,24 +236,39 @@
         <div id="dashboard" class="content-section">
             <h2 class="text-3xl font-bold mb-6">Overview</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="card">
+                <div class="card text-center">
+                    <div class="icon-container">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
                     <h3 class="text-xl font-semibold mb-2">Total Registered Users</h3>
                     <p class="text-4xl font-bold text-blue-400" id="totalUsers">0</p>
                 </div>
-                <div class="card">
+                <div class="card text-center">
+                    <div class="icon-container">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trending-up"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                    </div>
                     <h3 class="text-xl font-semibold mb-2">Daily Revenue (IST)</h3>
                     <p class="text-4xl font-bold text-green-400" id="dailyRevenue">$0.00</p>
                 </div>
-                <div class="card">
+                <div class="card text-center">
+                    <div class="icon-container">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+                    </div>
                     <h3 class="text-xl font-semibold mb-2">Monthly Revenue (IST)</h3>
                     <p class="text-4xl font-bold text-green-400" id="monthlyRevenue">$0.00</p>
                 </div>
-                <div class="card">
+                <div class="card text-center">
+                    <div class="icon-container">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07L9.4 6.6A5 5 0 0 0 3.34 13.5"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07L14.6 17.4A5 5 0 0 0 20.66 11.5"/></svg>
+                    </div>
                     <h3 class="text-xl font-semibold mb-2">Total Links Generated</h3>
                     <p class="text-4xl font-bold" id="totalLinks">0</p>
                 </div>
             </div>
-            <div class="card">
+            <div class="card text-center">
+                <div class="icon-container">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
                 <h3 class="text-xl font-semibold mb-4">Pending Withdrawal Requests</h3>
                 <p class="text-4xl font-bold text-yellow-400" id="pendingWithdrawalsCount">0</p>
             </div>
