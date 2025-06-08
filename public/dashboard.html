@@ -8,14 +8,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Poppins Font from Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN for SVG icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        /* Custom styles for gradients, fonts, and scrollbar */
         body {
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(to right top, #6b46c1, #805ad5, #9f7aea); /* Main gradient background */
             min-height: 100vh;
             color: #1a202c; /* Default dark text for light theme */
-            display: flex;
+            display: flex; /* Make body a flex container */
+            flex-direction: column; /* Stack children vertically */
             transition: background-color 0.3s ease;
+            overflow-x: hidden; /* Prevent horizontal scroll due to sidebar transitions */
         }
 
         /* Dark mode specific styles */
@@ -60,6 +65,23 @@
             color: #718096;
         }
 
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #805ad5;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #6b46c1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a32a3;
+        }
+
+        /* Sidebar specific styles */
         .sidebar {
             width: 250px;
             background-color: rgba(255, 255, 255, 0.05); /* Semi-transparent white for light theme */
@@ -69,71 +91,127 @@
             flex-direction: column;
             border-top-right-radius: 1.5rem;
             border-bottom-right-radius: 1.5rem;
-            transition: all 0.3s ease-in-out;
+            transition: transform 0.3s ease-in-out;
             transform: translateX(-100%); /* Hidden by default on mobile */
-            position: fixed;
-            height: 100%;
+            position: fixed; /* Fixed position for mobile sidebar */
+            height: 100%; /* Full height on mobile */
             z-index: 50;
+            overflow-y: auto; /* Enable scrolling for long sidebars */
         }
         .sidebar.active {
             transform: translateX(0%);
         }
+        /* Desktop sidebar behavior */
         @media (min-width: 768px) {
             .sidebar {
-                transform: translateX(0%);
-                position: static;
-                height: auto;
+                transform: translateX(0%); /* Always visible on desktop */
+                position: static; /* Static positioning on desktop */
+                height: auto; /* Let content dictate height */
+                flex-shrink: 0; /* Prevent it from shrinking */
+                border-radius: 0; /* No special rounding for desktop */
             }
         }
+
+        /* Toggle button for mobile sidebar */
         .sidebar-toggle {
-            position: fixed;
+            position: fixed; /* Fixed position for header on mobile */
             top: 1rem;
             left: 1rem;
-            background-color: #667eea;
+            background-color: #667eea; /* Button background */
             color: white;
             padding: 0.5rem 0.75rem;
             border-radius: 0.5rem;
             cursor: pointer;
-            z-index: 60;
-            display: block; /* Show on mobile */
+            z-index: 60; /* Above sidebar */
+            display: flex; /* Use flex for centering icon */
+            align-items: center;
+            justify-content: center;
+            height: 48px; /* Fixed height for better touch target */
+            width: 48px; /* Fixed width for better touch target */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow */
+            transition: background-color 0.2s ease-in-out;
+        }
+        .sidebar-toggle:hover {
+            background-color: #5a6fe0;
         }
         @media (min-width: 768px) {
             .sidebar-toggle {
                 display: none; /* Hide on desktop */
             }
         }
-        .sidebar a {
-            padding: 0.75rem 1rem;
-            margin-bottom: 0.5rem;
-            border-radius: 0.75rem;
-            color: #e2e8f0; /* Light text for sidebar links */
-            font-weight: 600;
-            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-        }
-        .sidebar a:hover, .sidebar a.active {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-        }
+
+        /* Main content area */
         .main-content {
             flex-grow: 1;
             padding: 2rem;
             transition: margin-left 0.3s ease-in-out;
-            margin-left: 0; /* No margin on mobile */
+            margin-left: 0; /* No margin on mobile, sidebar overlays */
             background-color: #f7fafc; /* Default light background for content area */
             border-top-left-radius: 1.5rem;
             border-bottom-left-radius: 1.5rem;
             box-shadow: -4px 0 10px rgba(0,0,0,0.1);
             min-height: 100vh; /* Ensure it covers full height */
+            width: 100%; /* Full width on mobile */
+            box-sizing: border-box; /* Include padding in width */
+            padding-top: 5rem; /* Add space for fixed header on mobile */
         }
         body.dark .main-content {
             background-color: #2d3748; /* Darker background for content area */
         }
 
+        /* Desktop main content behavior */
         @media (min-width: 768px) {
             .main-content {
                 margin-left: 250px; /* Adjust for sidebar width on desktop */
+                padding-top: 2rem; /* Reset padding for desktop */
+                border-radius: 1.5rem; /* Apply corner radius for desktop */
             }
         }
+
+        /* Mobile Header for dashboard content */
+        .mobile-dashboard-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to right, #6b46c1, #805ad5); /* Gradient for mobile header */
+            color: white;
+            padding: 1rem 1.5rem; /* Adjusted padding */
+            z-index: 45; /* Below sidebar, above main content */
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center the title */
+            height: 64px; /* Fixed height for the header */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .mobile-dashboard-header h1 {
+            font-size: 1.75rem; /* Adjusted font size for mobile header */
+            font-weight: 700;
+            text-align: center;
+            flex-grow: 1; /* Allow title to take available space */
+            margin-left: 50px; /* Offset to center title when toggle is present */
+        }
+        @media (min-width: 768px) {
+            .mobile-dashboard-header {
+                display: none; /* Hide on desktop */
+            }
+        }
+
+        /* Overlay for mobile sidebar (toggles with sidebar) */
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
+            opacity: 0;
+            visibility: hidden; /* Use visibility to prevent clicks when hidden */
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            z-index: 40;
+        }
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
         .content-section {
             background-color: #ffffff; /* White background for content sections */
             border-radius: 1.5rem;
@@ -308,205 +386,236 @@
     </style>
 </head>
 <body>
-    <div class="sidebar-toggle" onclick="toggleSidebar()">☰</div>
+    <!-- Mobile Dashboard Header -->
+    <header class="mobile-dashboard-header md:hidden">
+        <button id="sidebarToggleMobile" class="sidebar-toggle">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+        <h1 class="text-white">User Dashboard</h1>
+    </header>
 
-    <div class="sidebar" id="sidebar">
-        <h2 class="text-3xl font-bold mb-8 text-center">LinkEarn</h2>
-        <nav class="flex flex-col">
-            <a href="#" class="active" data-section="statistics">Statistics</a>
-            <a href="#" data-section="api">API</a>
-            <a href="#" data-section="payment">Payment</a>
-            <a href="#" data-section="earnings">Earnings</a>
-            <a href="#" data-section="recent-links">Recent Links</a>
-            <a href="#" data-section="test-link">Test Link</a>
-            <a href="#" data-section="settings">Settings</a> <!-- New Settings section -->
-            <a href="#" data-section="help">Help</a>
-            <a href="#" id="logoutButton" class="mt-auto text-red-300 hover:text-red-500 hover:bg-transparent">Logout</a>
-        </nav>
-    </div>
+    <!-- Main layout container -->
+    <div class="flex flex-grow w-full">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <h2 class="text-3xl font-bold mb-8 text-center text-white">LinkEarn</h2>
+            <nav class="flex flex-col">
+                <a href="#" class="active flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="statistics">
+                    <i data-lucide="layout-dashboard" class="w-6 h-6"></i><span>Statistics</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="api">
+                    <i data-lucide="key" class="w-6 h-6"></i><span>API</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="payment">
+                    <i data-lucide="credit-card" class="w-6 h-6"></i><span>Payment</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="earnings">
+                    <i data-lucide="dollar-sign" class="w-6 h-6"></i><span>Earnings</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="recent-links">
+                    <i data-lucide="link" class="w-6 h-6"></i><span>Recent Links</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="test-link">
+                    <i data-lucide="test-tube" class="w-6 h-6"></i><span>Test Link</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="settings">
+                    <i data-lucide="settings" class="w-6 h-6"></i><span>Settings</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="help">
+                    <i data-lucide="help-circle" class="w-6 h-6"></i><span>Help</span>
+                </a>
+                <a href="#" id="logoutButton" class="mt-auto flex items-center space-x-3 p-3 rounded-xl text-red-300 hover:text-red-500 hover:bg-transparent transition-colors duration-200">
+                    <i data-lucide="log-out" class="w-6 h-6"></i><span>Logout</span>
+                </a>
+            </nav>
+        </aside>
 
-    <div class="main-content" id="mainContent">
-        <h1 class="text-4xl font-bold mb-8 text-purple-700 dark:text-white">User Dashboard</h1>
+        <!-- Overlay for mobile sidebar -->
+        <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-        <!-- Statistics Section -->
-        <div id="statistics" class="content-section active">
-            <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Statistics Overview</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <div class="card text-center">
-                    <div class="icon-container">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dollar-sign"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <!-- Main content area -->
+        <div class="main-content" id="mainContent">
+            <h1 class="text-4xl font-bold mb-8 text-purple-700 dark:text-white hidden md:block">User Dashboard</h1>
+
+            <!-- Statistics Section -->
+            <div id="statistics" class="content-section active">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Statistics Overview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="card text-center">
+                        <div class="icon-container">
+                            <i data-lucide="dollar-sign" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Today's Revenue (IST)</h3>
+                        <p class="text-4xl font-bold text-green-600 dark:text-green-400" id="todayRevenue">$0.00</p>
                     </div>
-                    <h3 class="text-xl font-semibold mb-2">Today's Revenue (IST)</h3>
-                    <p class="text-4xl font-bold text-green-600 dark:text-green-400" id="todayRevenue">$0.00</p>
+                    <div class="card text-center">
+                        <div class="icon-container">
+                            <i data-lucide="wallet" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Current Balance</h3>
+                        <p class="text-4xl font-bold text-blue-600 dark:text-blue-400" id="currentBalance">$0.00</p>
+                    </div>
+                    <div class="card text-center">
+                        <div class="icon-container">
+                            <i data-lucide="eye" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Total Views</h3>
+                        <p class="text-4xl font-bold text-purple-600 dark:text-purple-300" id="totalViews">0</p>
+                    </div>
                 </div>
-                <div class="card text-center">
-                    <div class="icon-container">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wallet"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h12a2 2 0 0 1 0 4H5a2 2 0 0 0 0 4h12a2 2 0 0 0 2-2v-3"/><path d="M10 12h.01"/></svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Current Balance</h3>
-                    <p class="text-4xl font-bold text-blue-600 dark:text-blue-400" id="currentBalance">$0.00</p>
-                </div>
-                <div class="card text-center">
-                    <div class="icon-container">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2">Total Views</h3>
-                    <p class="text-4xl font-bold text-purple-600 dark:text-purple-300" id="totalViews">0</p>
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Your User ID</h3>
+                    <p id="userIdDisplay" class="text-lg break-all text-gray-700 dark:text-gray-300">Loading User ID...</p>
                 </div>
             </div>
-            <div class="card p-6">
-                <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Your User ID</h3>
-                <p id="userIdDisplay" class="text-lg break-all text-gray-700 dark:text-gray-300">Loading User ID...</p>
-            </div>
-        </div>
 
-        <!-- API Section -->
-        <div id="api" class="content-section">
-            <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">API Integration</h2>
-            <div class="card p-6">
-                <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Generate API Key</h3>
-                <p class="text-gray-700 dark:text-gray-300 mb-4">
-                    Click the button below to generate a one-time API key. Use this key in Telegram to connect your bot.
-                </p>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                    Instructions: Go to <span id="botUsernameDisplay" class="font-bold">@yourbotusername</span> in Telegram, send <code class="bg-gray-200 dark:bg-gray-700 rounded px-2 py-1 text-gray-800 dark:text-gray-200">/start</code>, and then paste this API key.
-                </p>
-                <button id="generateApiKeyBtn" class="btn-action mb-4">Generate New API Key</button>
-                <div id="apiKeyContainer" class="hidden">
-                    <p class="text-lg font-mono bg-gray-200 dark:bg-gray-700 p-3 rounded-lg flex justify-between items-center break-all text-gray-800 dark:text-gray-200">
-                        <span id="apiKeyDisplay"></span>
-                        <button id="copyApiKeyBtn" class="ml-4 btn-action bg-blue-600 hover:bg-blue-700">Copy</button>
+            <!-- API Section -->
+            <div id="api" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">API Integration</h2>
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Generate API Key</h3>
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">
+                        Click the button below to generate a one-time API key. Use this key in Telegram to connect your bot.
                     </p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">This key is for one-time use and will expire shortly.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Payment Section -->
-        <div id="payment" class="content-section">
-            <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Payment Settings</h2>
-            <div class="card p-6 mb-8">
-                <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">USDT BEP20 Wallet Address</h3>
-                <input type="text" id="usdtAddress" placeholder="Enter your USDT BEP20 address" class="input-field mb-4">
-                <button id="saveUsdtAddressBtn" class="btn-action">Save Address</button>
-            </div>
-            <div class="card p-6">
-                <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Withdraw Funds</h3>
-                <p class="text-gray-700 dark:text-gray-300 mb-4">Current Balance: <span class="font-bold text-blue-600 dark:text-blue-400" id="withdrawalBalance">$0.00</span></p>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Minimum withdrawal amount: <span id="minWithdrawalDisplay">$100</span> USD</p>
-                <input type="number" id="withdrawalAmount" placeholder="Amount to withdraw (USD)" class="input-field mb-4" min="100">
-                <button id="requestWithdrawalBtn" class="btn-action">Request Withdrawal</button>
-            </div>
-        </div>
-
-        <!-- Earnings Section -->
-        <div id="earnings" class="content-section">
-            <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Earnings History</h2>
-            <div class="card p-6">
-                <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Last 10 Days Earnings</h3>
-                <table class="min-w-full">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Earnings</th>
-                            <th>Views</th>
-                        </tr>
-                    </thead>
-                    <tbody id="earningsHistoryTableBody">
-                        <!-- Earnings data will be populated here -->
-                    </tbody>
-                </table>
-                <p class="text-xl font-bold mt-6 text-gray-800 dark:text-gray-200">Total Earnings: <span class="text-green-600 dark:text-green-400" id="totalEarningsSummary">$0.00</span></p>
-            </div>
-        </div>
-
-        <!-- Recent Links Section -->
-        <div id="recent-links" class="content-section">
-            <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Recent Links</h2>
-            <div class="card p-6">
-                <table class="min-w-full">
-                    <thead>
-                        <tr>
-                            <th>Link</th>
-                            <th>Views</th>
-                            <th>Date Created</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="recentLinksTableBody">
-                        <!-- Recent links data will be populated here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Test Link Section -->
-        <div id="test-link" class="content-section">
-            <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Test Link Generation</h2>
-            <div class="card p-6">
-                <p class="text-gray-700 dark:text-gray-300 mb-4">
-                    Generate a test link that doesn't count views or affect your earnings. Useful for testing media delivery.
-                </p>
-                <button id="generateTestLinkBtn" class="btn-action">Generate Test Link</button>
-                <div id="testLinkContainer" class="hidden mt-4">
-                    <p class="text-lg font-mono bg-gray-200 dark:bg-gray-700 p-3 rounded-lg flex justify-between items-center break-all text-gray-800 dark:text-gray-200">
-                        <span id="testLinkDisplay"></span>
-                        <button id="copyTestLinkBtn" class="ml-4 btn-action bg-blue-600 hover:bg-blue-700">Copy</button>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                        Instructions: Go to <span id="botUsernameDisplay" class="font-bold">@yourbotusername</span> in Telegram, send <code class="bg-gray-200 dark:bg-gray-700 rounded px-2 py-1 text-gray-800 dark:text-gray-200">/start</code>, and then paste this API key.
                     </p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">This is a test link and will not contribute to your earnings.</p>
+                    <button id="generateApiKeyBtn" class="btn-action mb-4">Generate New API Key</button>
+                    <div id="apiKeyContainer" class="hidden">
+                        <p class="text-lg font-mono bg-gray-200 dark:bg-gray-700 p-3 rounded-lg flex justify-between items-center break-all text-gray-800 dark:text-gray-200">
+                            <span id="apiKeyDisplay"></span>
+                            <button id="copyApiKeyBtn" class="ml-4 btn-action bg-blue-600 hover:bg-blue-700">Copy</button>
+                        </p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">This key is for one-time use and will expire shortly.</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Settings Section -->
-        <div id="settings" class="content-section">
-            <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Settings</h2>
-            <div class="card p-6 mb-8">
-                <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Profile Information</h3>
-                <input type="text" id="settingFullName" placeholder="Full Name" class="input-field mb-4">
-                <input type="email" id="settingEmail" placeholder="Email Address" class="input-field mb-4" disabled> <!-- Email usually not editable -->
-                <input type="text" id="settingTelegramUsername" placeholder="Telegram Username" class="input-field mb-4" disabled> <!-- Telegram Username usually not editable -->
-                <button id="saveProfileBtn" class="btn-action">Save Profile</button>
+            <!-- Payment Section -->
+            <div id="payment" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Payment Settings</h2>
+                <div class="card p-6 mb-8">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">USDT BEP20 Wallet Address</h3>
+                    <input type="text" id="usdtAddress" placeholder="Enter your USDT BEP20 address" class="input-field mb-4">
+                    <button id="saveUsdtAddressBtn" class="btn-action">Save Address</button>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Withdraw Funds</h3>
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">Current Balance: <span class="font-bold text-blue-600 dark:text-blue-400" id="withdrawalBalance">$0.00</span></p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Minimum withdrawal amount: <span id="minWithdrawalDisplay">$100</span> USD</p>
+                    <input type="number" id="withdrawalAmount" placeholder="Amount to withdraw (USD)" class="input-field mb-4" min="100">
+                    <button id="requestWithdrawalBtn" class="btn-action">Request Withdrawal</button>
+                </div>
             </div>
 
-            <div class="card p-6 mb-8">
-                <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Payment Wallet</h3>
-                <input type="text" id="settingUsdtAddress" placeholder="Enter your USDT BEP20 address" class="input-field mb-4">
-                <button id="saveSettingUsdtAddressBtn" class="btn-action">Save Wallet Address</button>
+            <!-- Earnings Section -->
+            <div id="earnings" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Earnings History</h2>
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Last 10 Days Earnings</h3>
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Earnings</th>
+                                <th>Views</th>
+                            </tr>
+                        </thead>
+                        <tbody id="earningsHistoryTableBody">
+                            <!-- Earnings data will be populated here -->
+                        </tbody>
+                    </table>
+                    <p class="text-xl font-bold mt-6 text-gray-800 dark:text-gray-200">Total Earnings: <span class="text-green-600 dark:text-green-400" id="totalEarningsSummary">$0.00</span></p>
+                </div>
             </div>
 
-            <div class="card p-6">
-                <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Theme Preference</h3>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="darkModeToggle">
-                    <span class="slider round"></span>
-                </label>
-                <span class="ml-4 text-gray-700 dark:text-gray-300" id="themeStatus">Light Mode</span>
+            <!-- Recent Links Section -->
+            <div id="recent-links" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Recent Links</h2>
+                <div class="card p-6">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th>Link</th>
+                                <th>Views</th>
+                                <th>Date Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentLinksTableBody">
+                            <!-- Recent links data will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
 
+            <!-- Test Link Section -->
+            <div id="test-link" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Test Link Generation</h2>
+                <div class="card p-6">
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">
+                        Generate a test link that doesn't count views or affect your earnings. Useful for testing media delivery.
+                    </p>
+                    <button id="generateTestLinkBtn" class="btn-action">Generate Test Link</button>
+                    <div id="testLinkContainer" class="hidden mt-4">
+                        <p class="text-lg font-mono bg-gray-200 dark:bg-gray-700 p-3 rounded-lg flex justify-between items-center break-all text-gray-800 dark:text-gray-200">
+                            <span id="testLinkDisplay"></span>
+                            <button id="copyTestLinkBtn" class="ml-4 btn-action bg-blue-600 hover:bg-blue-700">Copy</button>
+                        </p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">This is a test link and will not contribute to your earnings.</p>
+                    </div>
+                </div>
+            </div>
 
-        <!-- Help Section -->
-        <div id="help" class="content-section">
-            <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Help & Support</h2>
-            <div class="card p-6">
-                <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Frequently Asked Questions</h3>
-                <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
-                    <li>How do I connect my Telegram bot? <br>
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Go to the API section, generate a key, and send <code class="bg-gray-200 dark:bg-gray-700 rounded px-1 text-gray-800 dark:text-gray-200">/start connect_YOUR_API_KEY</code> to <span class="font-bold" id="faqBotUsername">@yourbotusername</span>.</span></li>
-                    <li>What is the minimum withdrawal amount? <br>
-                        <span class="text-sm text-gray-600 dark:text-gray-400">The minimum withdrawal is <span id="faqMinWithdrawal">$100 USD</span>.</span></li>
-                    <li>How often are earnings updated? <br>
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Your balance is updated in real-time. Daily earnings are calculated in Indian Standard Time (IST).</span></li>
-                    <li>Can I delete my generated links? <br>
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Yes, you can delete your own links from the "Recent Links" section.</span></li>
-                    <li>What if my media isn't delivered? <br>
-                        <span class="text-sm text-gray-600 dark:text-gray-400">Ensure your Telegram app is updated. For persistent issues, contact support.</span></li>
-                </ul>
-                <h3 class="text-xl font-semibold mt-8 mb-4 text-purple-600 dark:text-purple-300">Contact Support</h3>
-                <p class="text-gray-700 dark:text-gray-300">
-                    For further assistance, please contact our support bot: <a href="https://t.me/YOUR_SUPPORT_BOT_USERNAME" target="_blank" class="text-blue-600 hover:underline">@LinkEarnSupport</a>
-                </p>
+            <!-- Settings Section -->
+            <div id="settings" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Settings</h2>
+                <div class="card p-6 mb-8">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Profile Information</h3>
+                    <input type="text" id="settingFullName" placeholder="Full Name" class="input-field mb-4">
+                    <input type="email" id="settingEmail" placeholder="Email Address" class="input-field mb-4" disabled> <!-- Email usually not editable -->
+                    <input type="text" id="settingTelegramUsername" placeholder="Telegram Username" class="input-field mb-4" disabled> <!-- Telegram Username usually not editable -->
+                    <button id="saveProfileBtn" class="btn-action">Save Profile</button>
+                </div>
+
+                <div class="card p-6 mb-8">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Payment Wallet</h3>
+                    <input type="text" id="settingUsdtAddress" placeholder="Enter your USDT BEP20 address" class="input-field mb-4">
+                    <button id="saveSettingUsdtAddressBtn" class="btn-action">Save Wallet Address</button>
+                </div>
+
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Theme Preference</h3>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="darkModeToggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="ml-4 text-gray-700 dark:text-gray-300" id="themeStatus">Light Mode</span>
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div id="help" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Help & Support</h2>
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Frequently Asked Questions</h3>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
+                        <li>How do I connect my Telegram bot? <br>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Go to the API section, generate a key, and send <code class="bg-gray-200 dark:bg-gray-700 rounded px-1 text-gray-800 dark:text-gray-200">/start connect_YOUR_API_KEY</code> to <span class="font-bold" id="faqBotUsername">@yourbotusername</span>.</span></li>
+                        <li>What is the minimum withdrawal amount? <br>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">The minimum withdrawal is <span id="faqMinWithdrawal">$100 USD</span>.</span></li>
+                        <li>How often are earnings updated? <br>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Your balance is updated in real-time. Daily earnings are calculated in Indian Standard Time (IST).</span></li>
+                        <li>Can I delete my generated links? <br>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Yes, you can delete your own links from the "Recent Links" section.</span></li>
+                        <li>What if my media isn't delivered? <br>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Ensure your Telegram app is updated. For persistent issues, contact support.</span></li>
+                    </ul>
+                    <h3 class="text-xl font-semibold mt-8 mb-4 text-purple-600 dark:text-purple-300">Contact Support</h3>
+                    <p class="text-gray-700 dark:text-gray-300">
+                        For further assistance, please contact our support bot: <a href="https://t.me/YOUR_SUPPORT_BOT_USERNAME" target="_blank" class="text-blue-600 hover:underline">@LinkEarnSupport</a>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -523,6 +632,13 @@
         const TELEGRAM_HELP_BOT_USERNAME = 'LinkEarnSupport'; // !!! IMPORTANT: Your Telegram help bot's username without '@' !!!
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            } else {
+                console.warn('Lucide icons library not loaded.');
+            }
+
             const token = localStorage.getItem('token');
             const userId = localStorage.getItem('userId');
             const isAdmin = localStorage.getItem('isAdmin');
@@ -557,8 +673,24 @@
             const navLinks = document.querySelectorAll('.sidebar a');
             const contentSections = document.querySelectorAll('.content-section');
             const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('mainContent');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const sidebarToggleMobile = document.getElementById('sidebarToggleMobile'); // The hamburger menu button
 
+            // Function to toggle sidebar
+            function toggleSidebar() {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+                // Disable scrolling on body when sidebar is active
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : 'auto';
+            }
+
+            // Event listener for the mobile menu button
+            sidebarToggleMobile.addEventListener('click', toggleSidebar);
+
+            // Event listener for overlay to close sidebar
+            sidebarOverlay.addEventListener('click', toggleSidebar);
+
+            // Close sidebar when a navigation link is clicked (on mobile)
             navLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -580,7 +712,7 @@
 
                     // Hide sidebar on mobile after selection
                     if (window.innerWidth < 768) {
-                        sidebar.classList.remove('active');
+                        toggleSidebar(); // Use the unified toggle function
                     }
 
                     // Load data for the selected section
@@ -659,9 +791,10 @@
                 });
             }
 
-            function toggleSidebar() {
-                sidebar.classList.toggle('active');
-            }
+            // Renamed to sidebarToggleMobile and connected to `toggleSidebar`
+            // function toggleSidebar() {
+            //     sidebar.classList.toggle('active');
+            // }
 
             async function loadSectionData(sectionId) {
                 // This function would trigger data fetches specific to the section
@@ -727,23 +860,25 @@
                     const data = await response.json();
                     if (response.ok) {
                         // Assuming user-stats returns fullName, email, telegramUsername, usdtAddress
-                        const userProfile = await fetch(`${API_BASE_URL}/api/user/profile`, { // Fetch full profile if user-stats isn't enough
+                        // NOTE: If you have a dedicated /api/user/profile endpoint that returns more comprehensive profile data,
+                        // you should use that instead. For now, I'm fetching the full profile if user-stats isn't enough.
+                        const profileResponse = await fetch(`${API_BASE_URL}/api/user/profile`, {
                             headers: { 'Authorization': `Bearer ${token}`}
                         });
-                        const profileData = await userProfile.json();
+                        const profileData = await profileResponse.json();
 
-                        if (profileData.ok) {
+                        if (profileResponse.ok && profileData.user) {
                             document.getElementById('settingFullName').value = profileData.user.fullName || '';
                             document.getElementById('settingEmail').value = profileData.user.email || '';
                             document.getElementById('settingTelegramUsername').value = profileData.user.telegramUsername || '';
                             document.getElementById('settingUsdtAddress').value = profileData.user.usdtAddress || '';
                         } else {
-                            // Fallback if profile endpoint not ready, use user-stats data
+                            // Fallback if profile endpoint not ready or fails, use user-stats data
                              document.getElementById('settingFullName').value = localStorage.getItem('userFullName') || ''; // Assuming you'd store this on login
                              document.getElementById('settingEmail').value = localStorage.getItem('userEmail') || '';
-                             // Telegram username might not be stored directly on login, might need another fetch for it.
-                             // For now, it's disabled.
                              document.getElementById('settingUsdtAddress').value = data.usdtAddress || '';
+                             // Telegram username might not be stored directly on login, might need another fetch for it.
+                             // For now, it's disabled in the UI.
                         }
                     }
                 } catch (error) {
