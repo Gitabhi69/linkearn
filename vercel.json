@@ -21,7 +21,9 @@
     }
   ],
   "functions": {
-    "api/index.js": {}
+    "api/index.js": {
+      "runtime": "nodejs20.x"
+    }
   },
   "build": {
     "env": {
