@@ -402,7 +402,8 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'https://linkearn-five.vercel.app'; // !!! IMPORTANT: Replace with your deployed Vercel backend API URL, ensure no trailing slash !!!
+        // !!! IMPORTANT: Replace 'YOUR_VERCEL_BACKEND_API_URL' with your actual deployed Vercel backend API URL (e.g., https://your-app-name.vercel.app), ensure no trailing slash !!!
+        const API_BASE_URL = 'YOUR_VERCEL_BACKEND_API_URL'; 
         let adminLoggedIn = false; // Flag to track admin login state
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -525,13 +526,28 @@
         });
 
         function showAdminPanel() {
-            document.getElementById('adminLogin').classList.remove('active');
+            document.getElementById('adminLogin').classList.remove('active'); // Hide login form
             document.getElementById('sidebar').style.display = 'flex'; // Show sidebar
             // Adjust main content margin for desktop, if sidebar is visible
             if (window.innerWidth >= 768) {
                 document.getElementById('mainContent').style.marginLeft = '280px';
             }
+            // Ensure all other content sections are hidden, then activate dashboard
+            document.querySelectorAll('.content-section').forEach(section => {
+                if (section.id !== 'adminLogin') {
+                    section.classList.remove('active');
+                }
+            });
             document.getElementById('dashboard').classList.add('active'); // Show dashboard
+             // Set dashboard as active link in sidebar
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                if (link.dataset.section === 'dashboard') {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+
         }
 
         function toggleSidebar() {
@@ -596,7 +612,7 @@
                 tableBody.innerHTML = '';
                 if (response.ok && data.users && data.users.length > 0) {
                     data.users.forEach(user => {
-                        const row = tableBody.insertRow();
+                        const row = tableBody.insertRow(); /* CORRECTED HERE */
                         row.insertCell().textContent = user._id;
                         row.insertCell().textContent = user.email;
                         row.insertCell().textContent = user.telegramUsername;
