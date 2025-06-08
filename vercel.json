@@ -22,7 +22,7 @@
   ],
   "functions": {
     "api/index.js": {
-      "runtime": "nodejs20.x"
+      "use": "@vercel/node@3.0.0"
     }
   },
   "build": {
