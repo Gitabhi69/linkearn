@@ -20,11 +20,6 @@
       ]
     }
   ],
-  "functions": {
-    "api/index.js": {
-      "runtime": "nodejs15.x"
-    }
-  },
   "build": {
     "env": {
       "NODE_ENV": "production"
