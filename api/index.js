@@ -17,11 +17,13 @@ const AdminSetting = require('./models/AdminSetting');
 
 // Middleware (adjusted paths for Vercel's `api` directory)
 const { protect, adminProtect } = require('./middleware/auth');
+// NOTE: validateInitData is related to Telegram Mini App, if your Mini App is on Vercel and sends initData, keep it.
+// If not, and it's solely handled by the Heroku bot, you might remove this.
 const { validateInitData } = require('./middleware/initDataValidation');
 
 // Utils (adjusted paths for Vercel's `api` directory)
 const { sendLog } = require('./utils/telegramLogger'); // Vercel logger just logs to console
-const { generateUniqueCode, getStartOfISTDay, isValidUsdtAddress, generateShortUniqueId } = require('./utils/helpers'); // Added generateShortUniqueId here
+const { generateUniqueCode, getStartOfISTDay, isValidUsdtAddress, generateShortUniqueId } = require('./utils/helpers');
 
 // Initialize Express App
 const app = express();
@@ -31,26 +33,20 @@ app.use(cors()); // Enable CORS for frontend communication
 // Initialize API Key Cache (5 minutes expiry for one-time API key)
 const apiKeyCache = new NodeCache({ stdTTL: 300, checkperiod: 60 }); // 300 seconds = 5 minutes
 
-// Telegram Bot (Only needed if this Vercel function will also handle bot updates via webhooks)
-// If your bot is entirely on Heroku, you might remove this.
-// But for Vercel, it often serves webhook functions or needs to send messages.
-const { Telegraf } = require('telegraf');
-const bot = new Telegraf(process.env.BOT_TOKEN);
-initTelegramLogger(bot); // Initialize the logger with the bot instance
+// REMOVED: Telegraf related code as it's not needed for the Vercel API backend
+// const { Telegraf } = require('telegraf');
+// const bot = new Telegraf(process.env.BOT_TOKEN);
+// initTelegramLogger(bot); // Initialize the logger with the bot instance
 
 // MongoDB Connection
-// On Vercel, this connection might be initialized on each serverless function invocation.
-// Mongoose caches connections, so it should be efficient.
 mongoose.connect(process.env.MONGODB_URI)
     .then(async () => {
         console.log('MongoDB Connected (Vercel API)');
 
-        // !!! CRITICAL: Forcefully drop the index BEFORE creating it to avoid conflicts !!!
-        // This is a last resort to ensure the index is recreated with the correct sparse property.
+        // !!! CRITICAL: Forcefully drop and recreate the sparse index for telegramChatId !!!
         try {
             await User.collection.dropIndex('telegramChatId_1').catch(err => {
-                // Catch error if index doesn't exist (code 27), which is fine. Log other errors.
-                if (err.code !== 27) {
+                if (err.code !== 27) { // Error code 27: index not found
                     console.warn('Could not drop telegramChatId_1 index (might not exist or other issue):', err.message);
                 } else {
                     console.log('telegramChatId_1 index not found, no need to drop.');
@@ -65,7 +61,6 @@ mongoose.connect(process.env.MONGODB_URI)
             console.log('Ensured telegramChatId_1 index is unique and sparse.');
         } catch (indexError) {
             console.error('CRITICAL: Failed to create telegramChatId_1 index even after trying to drop it:', indexError.message);
-            // This would indicate a very serious MongoDB issue or configuration problem.
         }
 
 
@@ -105,10 +100,6 @@ mongoose.connect(process.env.MONGODB_URI)
     })
     .catch(err => {
         console.error('MongoDB connection error (Vercel API):', err);
-        // In Vercel, you might not want to exit the process, but rather let it fail
-        // and Vercel will manage retries/scaling.
-        // For local development, process.exit(1) is fine.
-        // process.exit(1);
     });
 
 // Utility for generating JWT token
@@ -854,181 +845,8 @@ app.put('/api/admin/settings', protect, adminProtect, async (req, res) => {
 
 
 /* ------------------------------------------------------------- */
-/* TELEGRAM BOT COMMANDS AND MEDIA HANDLING (for Vercel Webhook) */
-/* ------------------------------------------------------------- */
-
-// /start command - used for API key validation and linking Telegram user
-bot.start(async (ctx) => {
-    const payload = ctx.startPayload; // Get payload from deep link if any (e.g., from `startapp` in Mini App)
-    if (payload && payload.startsWith('connect_')) { // This is for user connecting via API key from website
-        const apiKey = payload.replace('connect_', '');
-        const userId = apiKeyCache.get(apiKey); // Get userId from cache using API key
-
-        if (userId) {
-            try {
-                const user = await User.findById(userId);
-                if (user && !user.telegramChatId) { // If user exists and not already linked
-                    user.telegramChatId = ctx.chat.id.toString();
-                    // Invalidate the API key as it's one-time use
-                    apiKeyCache.del(apiKey);
-                    user.apiKey = null; // Clear from DB as well
-                    user.apiKeyGeneratedAt = null;
-                    await user.save();
-                    sendLog(`User Connected Bot: ${user.email} (Chat ID: ${ctx.chat.id})`);
-                    ctx.reply(`🎉 Congratulations! Your LinkEarn account is now connected. You can now send media to me to generate monetized links!`);
-                } else if (user && user.telegramChatId) {
-                    ctx.reply(`Your account is already linked to this Telegram user.`);
-                } else {
-                    ctx.reply(`Invalid or expired API key. Please generate a new one from your LinkEarn dashboard.`);
-                }
-            } catch (error) {
-                console.error('Error linking user telegram:', error);
-                ctx.reply('An error occurred while linking your account. Please try again.');
-            }
-        } else {
-            ctx.reply(`Welcome to LinkEarn! To start earning, please sign up on our website and connect your account using the API key. Visit our website at: [linkearn.com](https://your-website-url.vercel.app/)`);
-        }
-    } else if (payload && payload.startsWith('recieve_')) { // This is for viewers arriving from a Mini App link
-        // This scenario is handled by the Telegram Mini App directly calling /api/count-view
-        // The bot itself doesn't need to do much here, just a welcome or redirect to Mini App
-        const uniqueId = payload.replace('recieve_', '');
-        ctx.reply(`Welcome to LinkEarn! Please open the content via the provided link in your browser or Telegram app to watch the ad and receive media.`);
-        // In a real scenario, you might construct the full Mini App link here again and send it back
-        // Or tell the user to go back to the app that opened the link.
-        // For simplicity, the Mini App directly handles view counting and media delivery.
-    }
-    else {
-        ctx.reply(`Welcome to LinkEarn! To start earning, please sign up on our website and connect your account using the API key. Visit our website at: [linkearn.com](https://your-website-url.vercel.app/)`);
-    }
-});
-
-// /help command
-bot.help((ctx) => ctx.reply(`
-Welcome to LinkEarn!
-Here's how it works:
-1. Go to your dashboard on [linkearn.com](https://your-website-url.vercel.app/) and generate an API key.
-2. Send /start to this bot with your API key to connect your account.
-3. Send me photos, videos, or documents to generate monetized links.
-4. Share your links and earn money when people view ads!
-
-For support, contact @helpbot (replace with actual help bot if different).
-`));
-
-// /views command (for admins only)
-bot.command('views', async (ctx) => {
-    try {
-        const user = await User.findOne({ telegramChatId: ctx.chat.id.toString() });
-        if (user && user.isAdmin) {
-            ctx.reply(`Admin Total Views: ${user.totalViews}`); // Assuming admin's totalViews is their own.
-        } else {
-            ctx.reply('You are not authorized to use this command.');
-        }
-    } catch (error) {
-        console.error('Error in /views command:', error);
-        ctx.reply('An error occurred while fetching views.');
-    }
-});
-
-// /delete VIDEO_ID command
-bot.command('delete', async (ctx) => {
-    const args = ctx.message.text.split(' ');
-    if (args.length < 2) {
-        return ctx.reply('Please specify the unique ID of the video/link to delete. Example: /delete ABCDE');
-    }
-    const uniqueIdToDelete = args[1].toUpperCase();
-
-    try {
-        const user = await User.findOne({ telegramChatId: ctx.chat.id.toString() });
-        if (!user) {
-            return ctx.reply('You must connect your LinkEarn account first. Use /start.');
-        }
-
-        const link = await Link.findOne({ uniqueId: uniqueIdToDelete, userId: user._id });
-
-        if (!link) {
-            return ctx.reply('Link not found or you are not the owner of this link.');
-        }
-
-        link.isActive = false; // Mark as inactive
-        await link.save();
-        sendLog(`Bot Action: User ${user.email} deactivated link ${uniqueIdToDelete}`);
-        ctx.reply(`Link ${uniqueIdToDelete} has been successfully deleted (marked inactive).`);
-
-    } catch (error) {
-        console.error('Error in /delete command:', error);
-        ctx.reply('An error occurred while deleting the link. Please try again.');
-    }
-});
-
-// Handle incoming media messages (photos, videos, documents)
-bot.on(['photo', 'video', 'document'], async (ctx) => {
-    try {
-        const user = await User.findOne({ telegramChatId: ctx.chat.id.toString() });
-        if (!user) {
-            return ctx.reply('Please connect your LinkEarn account first using the /start command and your API key from the dashboard.');
-        }
-        if (user.isBlocked) {
-            return ctx.reply('Your account is blocked and cannot generate new links. Please contact support.');
-        }
-
-        let fileId;
-        if (ctx.message.photo) {
-            fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id; // Get highest quality photo
-        } else if (ctx.message.video) {
-            fileId = ctx.message.video.file_id;
-        } else if (ctx.message.document) {
-            fileId = ctx.message.document.file_id;
-        } else {
-            return ctx.reply('Unsupported media type. Please send a photo, video, or document.');
-        }
-
-        // Forward media to storage channel
-        const storageChannelId = process.env.STORAGE_CHANNEL_ID;
-        if (!storageChannelId) {
-            sendLog('STORAGE_CHANNEL_ID is not set in environment variables!');
-            return ctx.reply('Bot configuration error: Storage channel not set.');
-        }
-
-        try {
-            // Forward the message to the storage channel
-            await ctx.telegram.forwardMessage(storageChannelId, ctx.chat.id, ctx.message.message_id);
-            sendLog(`Media forwarded to storage channel from user: ${user.email}`);
-        } catch (forwardError) {
-            console.error('Error forwarding media to storage channel:', forwardError);
-            sendLog(`Failed to forward media for user ${user.email}: ${forwardError.message}`);
-            return ctx.reply('Failed to store your media. Please check bot permissions for the storage channel.');
-        }
-
-        // Generate unique ID and Mini App Link
-        const uniqueId = generateShortUniqueId();
-        const botUsername = process.env.BOT_PUBLIC_USERNAME; // Your bot's @username
-        if (!botUsername) {
-            sendLog('BOT_PUBLIC_USERNAME is not set in environment variables!');
-            return ctx.reply('Bot configuration error: Bot username not set.');
-        }
-        const generatedLink = `https://t.me/${botUsername}/videos?startapp=recieve_${uniqueId}`; // Example format for Mini App
-
-        // Store link in MongoDB
-        const link = await Link.create({
-            userId: user._id,
-            uniqueId,
-            mediaFileId: fileId,
-            generatedLink,
-            createdDate: new Date(),
-            isActive: true
-        });
-
-        sendLog(`Link Generated: User ${user.email}, Unique ID: ${uniqueId}, Link: ${generatedLink}`);
-        ctx.reply(`Your monetized link is ready: ${generatedLink}\n\nShare it to start earning!`);
-
-    } catch (error) {
-        console.error('Error handling media message:', error);
-        ctx.reply('An error occurred while processing your media. Please try again.');
-    }
-});
-
-/* ------------------------------------------------------------- */
 /* TELEGRAM MINI APP API ENDPOINTS (CALLED BY MINI APP)          */
+/* NOTE: The bot itself runs on Heroku, but Mini Apps call these API endpoints. */
 /* ------------------------------------------------------------- */
 
 // @route   POST /api/count-view
@@ -1142,34 +960,18 @@ app.get('/:uniqueId', async (req, res) => {
     }
 });
 
-// Telegram Bot Error Handling
-bot.catch((err, ctx) => {
-    console.error(`Ooops, encountered an error for ${ctx.update.update_id}:`, err);
-    sendLog(`Bot Error: ${err.message || 'Unknown error'} in chat ${ctx.chat?.id || 'N/A'}`);
-    ctx.reply('Apologies, something went wrong with the bot. Please try again later.');
-});
-
-
-// Start the bot
-bot.launch();
-console.log('Telegram Bot launched!');
-
-// Enable graceful stop
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
-
 
 // Fallback for non-matching API routes (e.g., if a route doesn't exist)
 app.use('/api/*', (req, res) => {
     res.status(404).json({ message: 'API Endpoint not found.' });
 });
 
-// Start Express server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
-
-// Export the Express app for Vercel Serverless Functions
-// This needs to be at the very end of the file for Vercel to correctly pick it up
+// For Vercel Serverless Functions, we export the app
 module.exports = app;
+
+// IMPORTANT: Do NOT include bot.launch() here if your bot runs on Heroku.
+// Vercel serverless functions are stateless and short-lived;
+// a long-running bot process will cause timeouts and errors.
+// If your bot runs on Heroku, ensure its bot.js or server.js starts the bot there.
+// If you intend for Vercel to handle bot webhooks, that's a different setup.
+// For now, assuming bot is entirely on Heroku.
