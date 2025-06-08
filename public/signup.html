@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkEarn - Sign Up</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Poppins Font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right top, #6b46c1, #805ad5, #9f7aea); /* Softer purple gradient */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+        }
+        .signup-card {
+            background-color: rgba(255, 255, 255, 0.15); /* Slightly transparent white */
+            border-radius: 1.5rem; /* Rounded corners */
+            padding: 2.5rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px); /* Frosted glass effect */
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            outline: none;
+            transition: border-color 0.2s ease-in-out;
+        }
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .input-field:focus {
+            border-color: #a78bfa; /* Focus color */
+        }
+        .btn-submit {
+            background: linear-gradient(to right, #4c51bf, #667eea); /* Blueish gradient for buttons */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            width: 100%;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        .error-message {
+            color: #fca5a5; /* Red for errors */
+            margin-top: -0.75rem;
+            margin-bottom: 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none; /* Hidden by default */
+            text-align: center; /* Center message text */
+        }
+        .message-box button {
+            background-color: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-card">
+        <h2 class="text-4xl font-bold mb-8">Join LinkEarn Today!</h2>
+        <form id="signupForm">
+            <input type="text" id="fullName" placeholder="Full Name" class="input-field" required>
+            <div id="fullNameError" class="error-message hidden"></div>
+
+            <input type="email" id="email" placeholder="Email Address" class="input-field" required>
+            <div id="emailError" class="error-message hidden"></div>
+
+            <input type="password" id="password" placeholder="Password" class="input-field" required>
+            <div id="passwordError" class="error-message hidden"></div>
+
+            <input type="text" id="telegramUsername" placeholder="Telegram Username (e.g., @your_username)" class="input-field" required>
+            <div id="telegramUsernameError" class="error-message hidden"></div>
+
+            <input type="text" id="uniqueCode" placeholder="Unique Code (e.g., MONEY)" class="input-field" maxlength="5" required>
+            <div id="uniqueCodeError" class="error-message hidden"></div>
+
+            <button type="submit" class="btn-submit">Sign Up</button>
+        </form>
+        <p class="mt-6 text-gray-300">
+            Already have an account? <a href="login.html" class="text-blue-300 hover:underline">Login</a>
+        </p>
+    </div>
+
+    <!-- Message Box -->
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button onclick="closeMessageBox()">OK</button>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'YOUR_VERCEL_BACKEND_API_URL'; // !!! IMPORTANT: Replace with your deployed Vercel backend API URL, ensure no trailing slash !!!
+
+        // Generic function to display messages
+        function showMessageBox(message) {
+            document.getElementById('messageText').textContent = message;
+            document.getElementById('messageBox').style.display = 'block';
+        }
+
+        function closeMessageBox() {
+            document.getElementById('messageBox').style.display = 'none';
+        }
+
+        document.getElementById('signupForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            // Clear previous errors
+            document.getElementById('fullNameError').classList.add('hidden');
+            document.getElementById('emailError').classList.add('hidden');
+            document.getElementById('passwordError').classList.add('hidden');
+            document.getElementById('telegramUsernameError').classList.add('hidden');
+            document.getElementById('uniqueCodeError').classList.add('hidden');
+
+            const fullName = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const telegramUsername = document.getElementById('telegramUsername').value;
+            const uniqueCode = document.getElementById('uniqueCode').value;
+
+            // Simple client-side validation
+            let isValid = true;
+            if (!fullName) { document.getElementById('fullNameError').textContent = 'Full Name is required.'; document.getElementById('fullNameError').classList.remove('hidden'); isValid = false; }
+            if (!email || !email.includes('@')) { document.getElementById('emailError').textContent = 'Valid Email is required.'; document.getElementById('emailError').classList.remove('hidden'); isValid = false; }
+            if (!password || password.length < 6) { document.getElementById('passwordError').textContent = 'Password must be at least 6 characters.'; document.getElementById('passwordError').classList.remove('hidden'); isValid = false; }
+            if (!telegramUsername || !telegramUsername.startsWith('@')) { document.getElementById('telegramUsernameError').textContent = 'Telegram Username must start with @.'; document.getElementById('telegramUsernameError').classList.remove('hidden'); isValid = false; }
+            if (!uniqueCode || uniqueCode.length !== 5) { document.getElementById('uniqueCodeError').textContent = 'Unique Code must be 5 characters long.'; document.getElementById('uniqueCodeError').classList.remove('hidden'); isValid = false; }
+
+            if (!isValid) return;
+
+            try {
+                console.log('Attempting signup...');
+                const response = await fetch(`${API_BASE_URL}/api/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ fullName, email, password, telegramUsername, uniqueCode }),
+                });
+
+                const data = await response.json();
+                console.log('Signup API Response:', data);
+
+                if (response.ok) {
+                    showMessageBox('Sign up successful! Please log in.');
+                    console.log('Signup success, redirecting to login...');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000); // Give user time to see the message
+                } else {
+                    showMessageBox(`Sign up failed: ${data.message || 'An error occurred'}`);
+                    console.error('Signup failed:', data.message);
+                    // Display specific error messages from backend if available
+                    if (data.fieldErrors) {
+                        if (data.fieldErrors.fullName) { document.getElementById('fullNameError').textContent = data.fieldErrors.fullName; document.getElementById('fullNameError').classList.remove('hidden'); }
+                        if (data.fieldErrors.email) { document.getElementById('emailError').textContent = data.fieldErrors.email; document.getElementById('emailError').classList.remove('hidden'); }
+                        if (data.fieldErrors.password) { document.getElementById('passwordError').textContent = data.fieldErrors.password; document.getElementById('passwordError').classList.remove('hidden'); }
+                        if (data.fieldErrors.telegramUsername) { document.getElementById('telegramUsernameError').textContent = data.fieldErrors.telegramUsername; document.getElementById('telegramUsernameError').classList.remove('hidden'); }
+                        if (data.fieldErrors.uniqueCode) { document.getElementById('uniqueCodeError').textContent = data.fieldErrors.uniqueCode; document.getElementById('uniqueCodeError').classList.remove('hidden'); }
+                    }
+                }
+            } catch (error) {
+                console.error('Signup fetch error:', error);
+                showMessageBox('An unexpected error occurred. Please check console for details.');
+            }
+        });
+    </script>
+</body>
+</html>
