@@ -5,8 +5,10 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
     password: { type: String, required: true },
     telegramUsername: { type: String, required: true, unique: true, trim: true },
-    telegramChatId: { type: String, unique: true, sparse: true, default: null }, // Linked Telegram chat ID
-    apiKey: { type: String, unique: true, sparse: true, default: null }, // One-time API key
+    // Removed 'default: null' so the field is omitted if not provided, allowing sparse index to work
+    telegramChatId: { type: String, unique: true, sparse: true }, // Linked Telegram chat ID
+    // Removed 'default: null' so the field is omitted if not provided, allowing sparse index to work
+    apiKey: { type: String, unique: true, sparse: true }, // One-time API key
     apiKeyGeneratedAt: { type: Date, default: null }, // Timestamp for API key expiry
     balance: { type: Number, default: 0.00 },
     cpmRate: { type: Number, default: 5.00 }, // Default CPM rate per 1000 views
@@ -14,7 +16,6 @@ const userSchema = new mongoose.Schema({
     usdtAddress: { type: String, default: null, trim: true },
     isAdmin: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
-    theme: { type: String, enum: ['light', 'dark'], default: 'light' }, // New theme setting
     createdAt: { type: Date, default: Date.now },
 });
 
