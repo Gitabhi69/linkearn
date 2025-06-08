@@ -17,8 +17,6 @@ const AdminSetting = require('./models/AdminSetting');
 
 // Middleware (adjusted paths for Vercel's `api` directory)
 const { protect, adminProtect } = require('./middleware/auth');
-// NOTE: validateInitData is related to Telegram Mini App, if your Mini App is on Vercel and sends initData, keep it.
-// If not, and it's solely handled by the Heroku bot, you might remove this.
 const { validateInitData } = require('./middleware/initDataValidation');
 
 // Utils (adjusted paths for Vercel's `api` directory)
@@ -33,17 +31,16 @@ app.use(cors()); // Enable CORS for frontend communication
 // Initialize API Key Cache (5 minutes expiry for one-time API key)
 const apiKeyCache = new NodeCache({ stdTTL: 300, checkperiod: 60 }); // 300 seconds = 5 minutes
 
-// REMOVED: Telegraf related code as it's not needed for the Vercel API backend
-// const { Telegraf } = require('telegraf');
-// const bot = new Telegraf(process.env.BOT_TOKEN);
-// initTelegramLogger(bot); // Initialize the logger with the bot instance
-
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
     .then(async () => {
         console.log('MongoDB Connected (Vercel API)');
 
-        // !!! CRITICAL: Forcefully drop and recreate the sparse index for telegramChatId !!!
+        // !!! CRITICAL: Forcefully drop and recreate sparse indexes to avoid conflicts !!!
+        // This ensures indexes are correctly sparse, especially if they were created
+        // before the sparse option was added to the schema.
+
+        // Ensure telegramChatId_1 index is unique and sparse
         try {
             await User.collection.dropIndex('telegramChatId_1').catch(err => {
                 if (err.code !== 27) { // Error code 27: index not found
@@ -60,9 +57,29 @@ mongoose.connect(process.env.MONGODB_URI)
             );
             console.log('Ensured telegramChatId_1 index is unique and sparse.');
         } catch (indexError) {
-            console.error('CRITICAL: Failed to create telegramChatId_1 index even after trying to drop it:', indexError.message);
+            console.error('CRITICAL: Failed to create telegramChatId_1 index:', indexError.message);
+            // This would indicate a very serious MongoDB issue or configuration problem.
         }
 
+        // Ensure apiKey_1 index is unique and sparse
+        try {
+            await User.collection.dropIndex('apiKey_1').catch(err => {
+                if (err.code !== 27) { // Error code 27: index not found
+                    console.warn('Could not drop apiKey_1 index (might not exist or other issue):', err.message);
+                } else {
+                    console.log('apiKey_1 index not found, no need to drop.');
+                }
+            });
+            console.log('Attempted to drop existing apiKey_1 index.');
+
+            await User.collection.createIndex(
+                { apiKey: 1 }, // Index on apiKey in ascending order
+                { unique: true, sparse: true, name: 'apiKey_1' } // Ensure unique and sparse
+            );
+            console.log('Ensured apiKey_1 index is unique and sparse.');
+        } catch (indexError) {
+            console.error('CRITICAL: Failed to create apiKey_1 index:', indexError.message);
+        }
 
         // Ensure default admin user exists (for initial login)
         const adminEmail = process.env.ADMIN_EMAIL || 'admin@linkearn.com';
@@ -172,7 +189,7 @@ app.post('/api/signup', async (req, res) => {
             cpmRate: defaultCPM,
             isAdmin: false, // Ensure new users are not admins
             isBlocked: false, // Ensure new users are not blocked
-            // telegramChatId is NOT explicitly set here, so default: null and sparse: true will apply correctly.
+            // telegramChatId and apiKey are NOT explicitly set here, so default: null and sparse: true will apply correctly.
         });
 
         sendLog(`New User Registered: ${user.email} (${user.telegramUsername})`);
@@ -966,7 +983,7 @@ app.use('/api/*', (req, res) => {
     res.status(404).json({ message: 'API Endpoint not found.' });
 });
 
-// For Vercel Serverless Functions, we export the app
+// Export the Express app for Vercel Serverless Functions
 module.exports = app;
 
 // IMPORTANT: Do NOT include bot.launch() here if your bot runs on Heroku.
