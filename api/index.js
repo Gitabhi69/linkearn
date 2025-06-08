@@ -36,11 +36,11 @@ mongoose.connect(process.env.MONGODB_URI)
     .then(async () => {
         console.log('MongoDB Connected (Vercel API)');
 
-        // !!! CRITICAL: Forcefully drop and recreate sparse indexes to avoid conflicts !!!
-        // This ensures indexes are correctly sparse, especially if they were created
-        // before the sparse option was added to the schema.
+        // !!! CRITICAL: Forcefully drop and recreate unique indexes with partialFilterExpression !!!
+        // This ensures unique constraints only apply to documents where the field actually exists,
+        // allowing multiple 'null' or missing values without conflict.
 
-        // Ensure telegramChatId_1 index is unique and sparse
+        // Ensure telegramChatId_1 index is unique and uses partialFilterExpression
         try {
             await User.collection.dropIndex('telegramChatId_1').catch(err => {
                 if (err.code !== 27) { // Error code 27: index not found
@@ -53,15 +53,18 @@ mongoose.connect(process.env.MONGODB_URI)
 
             await User.collection.createIndex(
                 { telegramChatId: 1 }, // Index on telegramChatId in ascending order
-                { unique: true, sparse: true, name: 'telegramChatId_1' } // Ensure unique and sparse
+                {
+                    unique: true,
+                    name: 'telegramChatId_1',
+                    partialFilterExpression: { telegramChatId: { $exists: true, $ne: null } }
+                } // Unique constraint only applies if telegramChatId exists AND is not null
             );
-            console.log('Ensured telegramChatId_1 index is unique and sparse.');
+            console.log('Ensured telegramChatId_1 index is unique with partial filter.');
         } catch (indexError) {
             console.error('CRITICAL: Failed to create telegramChatId_1 index:', indexError.message);
-            // This would indicate a very serious MongoDB issue or configuration problem.
         }
 
-        // Ensure apiKey_1 index is unique and sparse
+        // Ensure apiKey_1 index is unique and uses partialFilterExpression
         try {
             await User.collection.dropIndex('apiKey_1').catch(err => {
                 if (err.code !== 27) { // Error code 27: index not found
@@ -74,9 +77,13 @@ mongoose.connect(process.env.MONGODB_URI)
 
             await User.collection.createIndex(
                 { apiKey: 1 }, // Index on apiKey in ascending order
-                { unique: true, sparse: true, name: 'apiKey_1' } // Ensure unique and sparse
+                {
+                    unique: true,
+                    name: 'apiKey_1',
+                    partialFilterExpression: { apiKey: { $exists: true, $ne: null } }
+                } // Unique constraint only applies if apiKey exists AND is not null
             );
-            console.log('Ensured apiKey_1 index is unique and sparse.');
+            console.log('Ensured apiKey_1 index is unique with partial filter.');
         } catch (indexError) {
             console.error('CRITICAL: Failed to create apiKey_1 index:', indexError.message);
         }
@@ -856,7 +863,7 @@ app.put('/api/admin/settings', protect, adminProtect, async (req, res) => {
         res.json({ message: 'System settings updated successfully!', settings });
     } catch (error) {
         console.error('Error updating admin settings:', error);
-        res.status(500).json({ message: 'Failed to update admin settings.' });
+        res.status(500).json({ message: 'Failed to update system settings.' });
     }
 });
 
