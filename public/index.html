@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkEarn - Monetize Your Media</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Poppins Font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right top, #6b46c1, #805ad5, #9f7aea); /* Consistent purple gradient */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .section-gradient {
+            background: linear-gradient(to right bottom, #805ad5, #9f7aea, #b794f4); /* Lighter, complementary gradient */
+            border-radius: 1.5rem; /* More rounded */
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary {
+            background: linear-gradient(to right, #4c51bf, #667eea); /* Blueish gradient for buttons */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem; /* Rounded button corners */
+            font-weight: 600;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        .card-home {
+            background-color: rgba(255, 255, 255, 0.15); /* Slightly transparent white */
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(5px); /* Frosted glass effect */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%; /* Ensure cards are same height in a grid */
+        }
+        .card-home svg {
+            width: 48px; /* Larger icons */
+            height: 48px;
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+        /* Responsive adjustments for layout */
+        @media (max-width: 768px) {
+            .hero-section-text {
+                font-size: 2.5rem; /* Adjust for smaller screens */
+            }
+            .hero-section-description {
+                font-size: 1.125rem;
+            }
+            .how-it-works-card, .features-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="py-4 shadow-lg">
+        <div class="container flex justify-between items-center">
+            <div class="text-3xl font-bold">LinkEarn</div>
+            <nav class="space-x-2 sm:space-x-4">
+                <a href="#features" class="text-white hover:text-gray-200">Features</a>
+                <a href="#how-it-works" class="text-white hover:text-gray-200">How It Works</a>
+                <a href="#" class="text-white hover:text-gray-200 hidden sm:inline">Pricing</a>
+                <a href="login.html" class="btn-primary">Login</a>
+                <a href="signup.html" class="btn-primary">Sign Up</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <!-- Hero Section -->
+        <section class="container text-center py-20">
+            <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-6 hero-section-text">
+                Monetize Your Links Like Never Before
+            </h1>
+            <p class="text-xl md:text-2xl opacity-90 mb-10 max-w-3xl mx-auto hero-section-description">
+                Transform your content sharing into a profitable business with our advanced URL shortening and monetization platform
+            </p>
+            <a href="signup.html" class="btn-primary text-xl">Start Earning Today</a>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
+                <div class="card-home">
+                    <!-- Icon for Active Publishers -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <p class="text-4xl font-bold">50K+</p>
+                    <p class="text-lg">Active Publishers</p>
+                </div>
+                <div class="card-home">
+                    <!-- Icon for Total Earnings -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dollar-sign"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <p class="text-4xl font-bold">$2.5M+</p>
+                    <p class="text-lg">Total Earnings</p>
+                </div>
+                <div class="card-home">
+                    <!-- Icon for Uptime -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-activity"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    <p class="text-4xl font-bold">99.9%</p>
+                    <p class="text-lg">Uptime Guaranteed</p>
+                </div>
+                <div class="card-home">
+                    <!-- Icon for Countries Served -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20A14.5 14.5 0 0 0 12 2Zm0 0V22"/><path d="M2 12h20"/></svg>
+                    <p class="text-4xl font-bold">180+</p>
+                    <p class="text-lg">Countries Served</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section id="how-it-works" class="container section-gradient">
+            <h2 class="text-4xl font-bold mb-12 text-center">How LinkEarn Works</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div class="card-home how-it-works-card">
+                    <p class="text-5xl font-bold text-yellow-300 mb-4">1</p>
+                    <h3 class="text-2xl font-semibold mb-2">Connect via API</h3>
+                    <p class="opacity-90">Integrate your Telegram bot with our powerful API to start generating monetized links instantly.</p>
+                </div>
+                <div class="card-home how-it-works-card">
+                    <p class="text-5xl font-bold text-yellow-300 mb-4">2</p>
+                    <h3 class="text-2xl font-semibold mb-2">Share Media</h3>
+                    <p class="opacity-90">Send videos or media files through your bot - we'll generate unique shortened links automatically.</p>
+                </div>
+                <div class="card-home how-it-works-card">
+                    <p class="text-5xl font-bold text-yellow-300 mb-4">3</p>
+                    <h3 class="text-2xl font-semibold mb-2">Earn Money</h3>
+                    <p class="opacity-90">Share links, get views, and earn money. Withdraw your earnings via USDT when you reach $100.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="container section-gradient">
+            <h2 class="text-4xl font-bold mb-12 text-center">Powerful Features</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="card-home features-card">
+                    <!-- Icon for Telegram Bot Integration -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bot"><path d="M12 8V4H8"/><path d="M2 14h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v8a2 2 0 0 1-2 2H2v7a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-7a2 2 0 0 0-2-2Z"/></svg>
+                    <h3 class="text-2xl font-semibold mb-2">Telegram Bot Integration</h3>
+                    <p class="opacity-90">Seamlessly connect with our Telegram bot for automated link generation and content delivery.</p>
+                </div>
+                <div class="card-home features-card">
+                    <!-- Icon for Real-time Analytics -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bar-chart"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+                    <h3 class="text-2xl font-semibold mb-2">Real-time Analytics</h3>
+                    <p class="opacity-90">Track your earnings, views, and engagement with our comprehensive analytics dashboard.</p>
+                </div>
+                <div class="card-home features-card">
+                    <!-- Icon for Instant Payments -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-credit-card"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                    <h3 class="text-2xl font-semibold mb-2">Instant Payments</h3>
+                    <p class="opacity-90">Withdraw your earnings via USDT BEP20 with fast processing and low minimum threshold.</p>
+                </div>
+            </div>
+            <div class="text-center mt-16">
+                <h2 class="text-4xl font-bold mb-6">Ready to Start Earning?</h2>
+                <p class="text-xl opacity-90 mb-10 max-w-2xl mx-auto">
+                    Join thousands of content creators who are already monetizing their content with LinkEarn.
+                </p>
+                <a href="signup.html" class="btn-primary text-xl">Create Your Account</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-8 text-center text-gray-200">
+        <div class="container">
+            <p class="mb-4">&copy; 2025 LinkEarn. All rights reserved.</p>
+            <nav class="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-6">
+                <a href="#" class="hover:text-white">Terms of Service</a>
+                <a href="#" class="hover:text-white">Privacy Policy</a>
+                <a href="mailto:support@linkearn.com" class="hover:text-white">Contact Us</a>
+            </nav>
+        </div>
+    </footer>
+</body>
+</html>
