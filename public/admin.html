@@ -98,6 +98,11 @@
         .content-section.active {
             display: block;
         }
+        /* New rule to forcefully hide adminLogin when not active */
+        #adminLogin:not(.active) {
+            display: none !important;
+        }
+
         .card {
             background-color: #edf2f7; /* Light gray for cards */
             border-radius: 1.5rem;
@@ -403,7 +408,7 @@
 
     <script>
         // !!! IMPORTANT: Replace 'YOUR_VERCEL_BACKEND_API_URL' with your actual deployed Vercel backend API URL (e.g., https://your-app-name.vercel.app), ensure no trailing slash !!!
-        const API_BASE_URL = 'https://linkearn-five.vercel.app'; 
+        const API_BASE_URL = 'YOUR_VERCEL_BACKEND_API_URL'; 
         let adminLoggedIn = false; // Flag to track admin login state
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -527,6 +532,9 @@
 
         function showAdminPanel() {
             document.getElementById('adminLogin').classList.remove('active'); // Hide login form
+            // Also explicitly set display to none to ensure it's hidden
+            document.getElementById('adminLogin').style.display = 'none'; 
+
             document.getElementById('sidebar').style.display = 'flex'; // Show sidebar
             // Adjust main content margin for desktop, if sidebar is visible
             if (window.innerWidth >= 768) {
