@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LinkEarn - User Dashboard</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Poppins Font from Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN for SVG icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
@@ -167,13 +170,13 @@
             z-index: 1000; display: none; text-align: center; font-weight: 500;
         }
 
-        /* --- Table styles (FIX for horizontal scroll) --- */
+        /* Table styles */
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
         th, td {
             padding: 0.75rem 1rem; text-align: left;
             border-bottom: 1px solid var(--border-light);
-            white-space: nowrap; /* Prevents text wrapping to force horizontal scroll */
+            white-space: nowrap; 
         }
         th { background-color: #f9fafb; font-weight: 600; }
 
@@ -187,6 +190,7 @@
     </style>
 </head>
 <body>
+    <!-- Mobile Dashboard Header -->
     <header class="mobile-dashboard-header md:hidden">
         <button id="sidebarToggleMobile" class="sidebar-toggle">
             <i data-lucide="menu" class="w-5 h-5"></i>
@@ -194,7 +198,9 @@
         <h1 class="brand-text">Dashboard</h1>
     </header>
 
+    <!-- Main layout container -->
     <div class="flex flex-grow w-full">
+        <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <h2 class="text-2xl brand-text mb-8 text-center">LinkEarn</h2>
             <nav class="flex flex-col space-y-2">
@@ -225,11 +231,14 @@
             </nav>
         </aside>
 
+        <!-- Overlay for mobile sidebar -->
         <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
+        <!-- Main content area -->
         <div class="main-content" id="mainContent">
             <h1 class="text-2xl section-title mb-6 hidden md:block">User Dashboard</h1>
 
+            <!-- Statistics Section -->
             <div id="statistics" class="content-section active">
                 <h2 class="text-xl section-title mb-4">Statistics Overview</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -248,6 +257,7 @@
                 </div>
             </div>
 
+            <!-- API Section -->
             <div id="api" class="content-section">
                 <h2 class="text-xl section-title mb-4">API Integration</h2>
                 <div class="card">
@@ -266,7 +276,7 @@
                         <div id="apiKeyContainer" class="hidden">
                             <label class="font-semibold block mb-2">Your Permanent API Key:</label>
                             <div class="flex items-center gap-2">
-                                <p class="text-base font-mono bg-gray-100 dark:bg-gray-800 p-3 rounded-lg w-full" id="apiKeyDisplay"></p>
+                                <p class="text-base font-mono bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-200 p-3 rounded-lg w-full" id="apiKeyDisplay"></p>
                                 <button id="copyApiKeyBtn" class="btn-action !p-3" title="Copy API Key"><i data-lucide="copy" class="w-5 h-5"></i></button>
                             </div>
                             <p class="text-sm text-gray-500 mt-2">✅ Your key is permanent. Keep it safe.</p>
@@ -275,6 +285,7 @@
                 </div>
             </div>
 
+            <!-- Payment Section -->
             <div id="payment" class="content-section">
                 <h2 class="text-xl section-title mb-4">Payments</h2>
                 <div class="card mb-6">
@@ -292,6 +303,7 @@
                 </div>
             </div>
 
+            <!-- Earnings Section -->
             <div id="earnings" class="content-section">
                 <h2 class="text-xl section-title mb-4">Earnings History</h2>
                 <div class="card">
@@ -304,6 +316,7 @@
                 </div>
             </div>
 
+            <!-- Recent Links Section -->
             <div id="recent-links" class="content-section">
                 <h2 class="text-xl section-title mb-4">Recent Links</h2>
                 <div class="card">
@@ -316,6 +329,7 @@
                 </div>
             </div>
 
+            <!-- Settings Section -->
             <div id="settings" class="content-section">
                 <h2 class="text-xl section-title mb-4">Settings</h2>
                 <div class="card mb-6">
@@ -336,6 +350,7 @@
                 </div>
             </div>
 
+            <!-- Help Section -->
             <div id="help" class="content-section">
                 <h2 class="text-xl section-title mb-4">Help & Support</h2>
                 <div class="card">
@@ -365,6 +380,7 @@
         </div>
     </div>
 
+    <!-- Message Box -->
     <div id="messageBox" class="message-box"></div>
 
     <script>
@@ -381,8 +397,7 @@
             }
 
             // --- THEME INITIALIZATION (FIXED) ---
-            // This now correctly applies the theme on page load.
-            const savedTheme = localStorage.getItem('theme') || 'light';
+            const savedTheme = localStorage.getItem('theme') || 'dark';
             applyTheme(savedTheme);
 
             setupEventListeners();
@@ -462,12 +477,20 @@
                 const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
                 if (response.status === 401) { logout(); throw new Error('Unauthorized'); }
                 if (!response.ok) {
+                    // For 404 on API key check, we don't want to show an error message
+                    if (endpoint === '/api/user/api-key' && response.status === 404) {
+                        return null; // Return null to indicate key not found
+                    }
                     const errorData = await response.json();
                     throw new Error(errorData.message || `API error: ${response.status}`);
                 }
-                return response.json();
+                 // Handle cases where response might be empty
+                const text = await response.text();
+                return text ? JSON.parse(text) : {};
             } catch (error) {
-                showMessageBox(error.message, 3000);
+                if(error.message !== 'Unauthorized') { // Don't show generic error for logout
+                    showMessageBox(error.message, 3000);
+                }
                 throw error;
             }
         }
@@ -498,29 +521,27 @@
         async function fetchApiKey() {
             try {
                 const data = await apiRequest('/api/user/api-key'); // GET request
-                if (data.apiKey) {
+                if (data && data.apiKey) {
                     document.getElementById('apiKeyDisplay').textContent = data.apiKey;
                     document.getElementById('apiKeyContainer').classList.remove('hidden');
                     document.getElementById('generateApiKeyBtn').classList.add('hidden');
                 } else {
-                    // This case handles if API returns OK but no key, ensuring generate btn is visible
                     document.getElementById('generateApiKeyBtn').classList.remove('hidden');
                     document.getElementById('apiKeyContainer').classList.add('hidden');
                 }
             } catch (error) {
-                // Catches errors (like 404 Not Found), assumes no key exists
+                console.log('No existing API key found or error fetching. Showing generate button.');
                 document.getElementById('generateApiKeyBtn').classList.remove('hidden');
                 document.getElementById('apiKeyContainer').classList.add('hidden');
-                console.log('No existing API key found for user.');
             }
         }
 
         async function generateApiKey() {
             try {
                 const data = await apiRequest('/api/user/api-key', { method: 'POST' });
-                if (data.apiKey) {
-                    showMessageBox('API Key generated successfully!');
-                    await fetchApiKey(); // Refresh UI to show the new key and hide the button
+                if (data && data.apiKey) {
+                    showMessageBox('Permanent API Key generated successfully!');
+                    await fetchApiKey(); 
                 }
             } catch (error) { console.error('Failed to generate API key:', error); }
         }
