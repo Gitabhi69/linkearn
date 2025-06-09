@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkEarn - User Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Poppins Font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN for SVG icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom styles for gradients, fonts, and scrollbar */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right top, #6b46c1, #805ad5, #9f7aea); /* Main gradient background */
+            min-height: 100vh;
+            color: #1a202c; /* Default dark text for light theme */
+            display: flex; /* Make body a flex container */
+            flex-direction: column; /* Stack children vertically */
+            transition: background-color 0.3s ease;
+            overflow-x: hidden; /* Prevent horizontal scroll due to sidebar transitions */
+        }
+
+        /* Dark mode specific styles */
+        body.dark {
+            background: linear-gradient(to right top, #1a202c, #2d3748, #4a5568); /* Darker gradient */
+            color: #e2e8f0; /* Light text for dark theme */
+        }
+        body.dark .content-section,
+        body.dark .card {
+            background-color: rgba(255, 255, 255, 0.05); /* Lighter transparency for dark mode cards */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        body.dark .sidebar {
+            background-color: rgba(0, 0, 0, 0.5); /* Darker sidebar */
+        }
+        body.dark .sidebar a {
+            color: #cbd5e0;
+        }
+        body.dark .sidebar a:hover,
+        body.dark .sidebar a.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+        body.dark .input-field {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #e2e8f0;
+        }
+        body.dark .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        body.dark th {
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+        body.dark td {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+        body.dark .text-gray-300 {
+            color: #a0aec0;
+        }
+        body.dark .text-gray-400 {
+            color: #718096;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #805ad5;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #6b46c1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a32a3;
+        }
+
+        /* Sidebar specific styles */
+        .sidebar {
+            width: 250px;
+            background-color: rgba(255, 255, 255, 0.05); /* Semi-transparent white for light theme */
+            padding: 1.5rem;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            border-top-right-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(-100%); /* Hidden by default on mobile */
+            position: fixed; /* Fixed position for mobile sidebar */
+            height: 100%; /* Full height on mobile */
+            z-index: 50;
+            overflow-y: auto; /* Enable scrolling for long sidebars */
+        }
+        .sidebar.active {
+            transform: translateX(0%);
+        }
+        /* Desktop sidebar behavior */
+        @media (min-width: 768px) {
+            .sidebar {
+                transform: translateX(0%); /* Always visible on desktop */
+                position: static; /* Static positioning on desktop */
+                height: auto; /* Let content dictate height */
+                flex-shrink: 0; /* Prevent it from shrinking */
+                border-radius: 0; /* No special rounding for desktop */
+            }
+        }
+
+        /* Toggle button for mobile sidebar */
+        .sidebar-toggle {
+            position: fixed; /* Fixed position for header on mobile */
+            top: 1rem;
+            left: 1rem;
+            background-color: #667eea; /* Button background */
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            z-index: 60; /* Above sidebar */
+            display: flex; /* Use flex for centering icon */
+            align-items: center;
+            justify-content: center;
+            height: 48px; /* Fixed height for better touch target */
+            width: 48px; /* Fixed width for better touch target */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow */
+            transition: background-color 0.2s ease-in-out;
+        }
+        .sidebar-toggle:hover {
+            background-color: #5a6fe0;
+        }
+        @media (min-width: 768px) {
+            .sidebar-toggle {
+                display: none; /* Hide on desktop */
+            }
+        }
+
+        /* Main content area */
+        .main-content {
+            flex-grow: 1;
+            padding: 2rem;
+            transition: margin-left 0.3s ease-in-out;
+            margin-left: 0; /* No margin on mobile, sidebar overlays */
+            background-color: #f7fafc; /* Default light background for content area */
+            border-top-left-radius: 1.5rem;
+            border-bottom-left-radius: 1.5rem;
+            box-shadow: -4px 0 10px rgba(0,0,0,0.1);
+            min-height: 100vh; /* Ensure it covers full height */
+            width: 100%; /* Full width on mobile */
+            box-sizing: border-box; /* Include padding in width */
+            padding-top: 5rem; /* Add space for fixed header on mobile */
+        }
+        body.dark .main-content {
+            background-color: #2d3748; /* Darker background for content area */
+        }
+
+        /* Desktop main content behavior */
+        @media (min-width: 768px) {
+            .main-content {
+                margin-left: 250px; /* Adjust for sidebar width on desktop */
+                padding-top: 2rem; /* Reset padding for desktop */
+                border-radius: 1.5rem; /* Apply corner radius for desktop */
+            }
+        }
+
+        /* Mobile Header for dashboard content */
+        .mobile-dashboard-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to right, #6b46c1, #805ad5); /* Gradient for mobile header */
+            color: white;
+            padding: 1rem 1.5rem; /* Adjusted padding */
+            z-index: 45; /* Below sidebar, above main content */
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center the title */
+            height: 64px; /* Fixed height for the header */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .mobile-dashboard-header h1 {
+            font-size: 1.75rem; /* Adjusted font size for mobile header */
+            font-weight: 700;
+            text-align: center;
+            flex-grow: 1; /* Allow title to take available space */
+            margin-left: 50px; /* Offset to center title when toggle is present */
+        }
+        @media (min-width: 768px) {
+            .mobile-dashboard-header {
+                display: none; /* Hide on desktop */
+            }
+        }
+
+        /* Overlay for mobile sidebar (toggles with sidebar) */
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
+            opacity: 0;
+            visibility: hidden; /* Use visibility to prevent clicks when hidden */
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            z-index: 40;
+        }
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .content-section {
+            background-color: #ffffff; /* White background for content sections */
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            display: none; /* Hidden by default, shown by JS */
+            border: 1px solid #e2e8f0; /* Light border */
+        }
+        .content-section.active {
+            display: block;
+        }
+        .card {
+            background-color: #edf2f7; /* Light gray for cards */
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0; /* Light border */
+        }
+        .btn-action {
+            background: linear-gradient(to right, #4c51bf, #667eea);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+            border-radius: 0.75rem;
+            border: 1px solid #cbd5e0; /* Light border */
+            background-color: #ffffff; /* White background */
+            color: #1a202c; /* Dark text */
+            outline: none;
+            transition: border-color 0.2s ease-in-out;
+        }
+        .input-field::placeholder {
+            color: #a0aec0; /* Lighter placeholder */
+        }
+        .input-field:focus {
+            border-color: #667eea; /* Focus color */
+        }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none; /* Hidden by default */
+            text-align: center;
+        }
+        .message-box button {
+            background-color: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0; /* Light border */
+        }
+        body.dark th, body.dark td {
+             border-bottom: 1px solid rgba(255, 255, 255, 0.15); /* Dark mode table border */
+        }
+        th {
+            background-color: #f0f4f8; /* Very light gray */
+            font-weight: 700;
+        }
+        body.dark th {
+            background-color: rgba(255, 255, 255, 0.08); /* Dark mode table header */
+        }
+        .text-gray-300 {
+            color: #4a5568; /* Darker gray for light theme */
+        }
+        .text-gray-400 {
+            color: #718096; /* Medium gray for light theme */
+        }
+        .icon-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(to right, #4c51bf, #667eea); /* Gradient icons */
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            color: white;
+        }
+        .icon-container svg {
+            width: 32px;
+            height: 32px;
+            color: white;
+        }
+
+        /* Toggle switch for dark mode */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px #667eea;
+        }
+        input:checked + .slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+        /* Rounded sliders */
+        .slider.round {
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Dashboard Header -->
+    <header class="mobile-dashboard-header md:hidden">
+        <button id="sidebarToggleMobile" class="sidebar-toggle">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+        <h1 class="text-white">User Dashboard</h1>
+    </header>
+
+    <!-- Main layout container -->
+    <div class="flex flex-grow w-full">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <h2 class="text-3xl font-bold mb-8 text-center text-white">LinkEarn</h2>
+            <nav class="flex flex-col">
+                <a href="#" class="active flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="statistics">
+                    <i data-lucide="layout-dashboard" class="w-6 h-6"></i><span>Statistics</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="api">
+                    <i data-lucide="key" class="w-6 h-6"></i><span>API</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="payment">
+                    <i data-lucide="credit-card" class="w-6 h-6"></i><span>Payment</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="earnings">
+                    <i data-lucide="dollar-sign" class="w-6 h-6"></i><span>Earnings</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="recent-links">
+                    <i data-lucide="link" class="w-6 h-6"></i><span>Recent Links</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="test-link">
+                    <i data-lucide="test-tube" class="w-6 h-6"></i><span>Test Link</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="settings">
+                    <i data-lucide="settings" class="w-6 h-6"></i><span>Settings</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="help">
+                    <i data-lucide="help-circle" class="w-6 h-6"></i><span>Help</span>
+                </a>
+                <a href="#" id="logoutButton" class="mt-auto flex items-center space-x-3 p-3 rounded-xl text-red-300 hover:text-red-500 hover:bg-transparent transition-colors duration-200">
+                    <i data-lucide="log-out" class="w-6 h-6"></i><span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Overlay for mobile sidebar -->
+        <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- Main content area -->
+        <div class="main-content" id="mainContent">
+            <h1 class="text-4xl font-bold mb-8 text-purple-700 dark:text-white hidden md:block">User Dashboard</h1>
+
+            <!-- Statistics Section -->
+            <div id="statistics" class="content-section active">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Statistics Overview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="card text-center">
+                        <div class="icon-container">
+                            <i data-lucide="dollar-sign" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Today's Revenue (IST)</h3>
+                        <p class="text-4xl font-bold text-green-600 dark:text-green-400" id="todayRevenue">$0.00</p>
+                    </div>
+                    <div class="card text-center">
+                        <div class="icon-container">
+                            <i data-lucide="wallet" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Current Balance</h3>
+                        <p class="text-4xl font-bold text-blue-600 dark:text-blue-400" id="currentBalance">$0.00</p>
+                    </div>
+                    <div class="card text-center">
+                        <div class="icon-container">
+                            <i data-lucide="eye" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Total Views</h3>
+                        <p class="text-4xl font-bold text-purple-600 dark:text-purple-300" id="totalViews">0</p>
+                    </div>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Your User ID</h3>
+                    <p id="userIdDisplay" class="text-lg break-all text-gray-700 dark:text-gray-300">Loading User ID...</p>
+                </div>
+            </div>
+
+            <!-- API Section -->
+            <div id="api" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">API Integration</h2>
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Generate API Key</h3>
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">
+                        Click the button below to generate a one-time API key. Use this key in Telegram to connect your bot.
+                    </p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                        Instructions: Go to <span id="botUsernameDisplay" class="font-bold">@yourbotusername</span> in Telegram, send <code class="bg-gray-200 dark:bg-gray-700 rounded px-2 py-1 text-gray-800 dark:text-gray-200">/start</code>, and then paste this API key.
+                    </p>
+                    <button id="generateApiKeyBtn" class="btn-action mb-4">Generate New API Key</button>
+                    <div id="apiKeyContainer" class="hidden">
+                        <p class="text-lg font-mono bg-gray-200 dark:bg-gray-700 p-3 rounded-lg flex justify-between items-center break-all text-gray-800 dark:text-gray-200">
+                            <span id="apiKeyDisplay"></span>
+                            <button id="copyApiKeyBtn" class="ml-4 btn-action bg-blue-600 hover:bg-blue-700">Copy</button>
+                        </p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">This key is for one-time use and will expire shortly.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Section -->
+            <div id="payment" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Payment Settings</h2>
+                <div class="card p-6 mb-8">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">USDT BEP20 Wallet Address</h3>
+                    <input type="text" id="usdtAddress" placeholder="Enter your USDT BEP20 address" class="input-field mb-4">
+                    <button id="saveUsdtAddressBtn" class="btn-action">Save Address</button>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Withdraw Funds</h3>
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">Current Balance: <span class="font-bold text-blue-600 dark:text-blue-400" id="withdrawalBalance">$0.00</span></p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Minimum withdrawal amount: <span id="minWithdrawalDisplay">$100</span> USD</p>
+                    <input type="number" id="withdrawalAmount" placeholder="Amount to withdraw (USD)" class="input-field mb-4" min="100">
+                    <button id="requestWithdrawalBtn" class="btn-action">Request Withdrawal</button>
+                </div>
+            </div>
+
+            <!-- Earnings Section -->
+            <div id="earnings" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Earnings History</h2>
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Last 10 Days Earnings</h3>
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Earnings</th>
+                                <th>Views</th>
+                            </tr>
+                        </thead>
+                        <tbody id="earningsHistoryTableBody">
+                            <!-- Earnings data will be populated here -->
+                        </tbody>
+                    </table>
+                    <p class="text-xl font-bold mt-6 text-gray-800 dark:text-gray-200">Total Earnings: <span class="text-green-600 dark:text-green-400" id="totalEarningsSummary">$0.00</span></p>
+                </div>
+            </div>
+
+            <!-- Recent Links Section -->
+            <div id="recent-links" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Recent Links</h2>
+                <div class="card p-6">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th>Link</th>
+                                <th>Views</th>
+                                <th>Date Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentLinksTableBody">
+                            <!-- Recent links data will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Test Link Section -->
+            <div id="test-link" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Test Link Generation</h2>
+                <div class="card p-6">
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">
+                        Generate a test link that doesn't count views or affect your earnings. Useful for testing media delivery.
+                    </p>
+                    <button id="generateTestLinkBtn" class="btn-action">Generate Test Link</button>
+                    <div id="testLinkContainer" class="hidden mt-4">
+                        <p class="text-lg font-mono bg-gray-200 dark:bg-gray-700 p-3 rounded-lg flex justify-between items-center break-all text-gray-800 dark:text-gray-200">
+                            <span id="testLinkDisplay"></span>
+                            <button id="copyTestLinkBtn" class="ml-4 btn-action bg-blue-600 hover:bg-blue-700">Copy</button>
+                        </p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">This is a test link and will not contribute to your earnings.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Settings</h2>
+                <div class="card p-6 mb-8">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Profile Information</h3>
+                    <input type="text" id="settingFullName" placeholder="Full Name" class="input-field mb-4">
+                    <input type="email" id="settingEmail" placeholder="Email Address" class="input-field mb-4" disabled> <!-- Email usually not editable -->
+                    <input type="text" id="settingTelegramUsername" placeholder="Telegram Username" class="input-field mb-4" disabled> <!-- Telegram Username usually not editable -->
+                    <button id="saveProfileBtn" class="btn-action">Save Profile</button>
+                </div>
+
+                <div class="card p-6 mb-8">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Payment Wallet</h3>
+                    <input type="text" id="settingUsdtAddress" placeholder="Enter your USDT BEP20 address" class="input-field mb-4">
+                    <button id="saveSettingUsdtAddressBtn" class="btn-action">Save Wallet Address</button>
+                </div>
+
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Theme Preference</h3>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="darkModeToggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="ml-4 text-gray-700 dark:text-gray-300" id="themeStatus">Light Mode</span>
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div id="help" class="content-section">
+                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Help & Support</h2>
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Frequently Asked Questions</h3>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
+                        <li>How do I connect my Telegram bot? <br>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Go to the API section, generate a key, and send <code class="bg-gray-200 dark:bg-gray-700 rounded px-1 text-gray-800 dark:text-gray-200">/start connect_YOUR_API_KEY</code> to <span class="font-bold" id="faqBotUsername">@yourbotusername</span>.</span></li>
+                        <li>What is the minimum withdrawal amount? <br>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">The minimum withdrawal is <span id="faqMinWithdrawal">$100 USD</span>.</span></li>
+                        <li>How often are earnings updated? <br>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Your balance is updated in real-time. Daily earnings are calculated in Indian Standard Time (IST).</span></li>
+                        <li>Can I delete my generated links? <br>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Yes, you can delete your own links from the "Recent Links" section.</span></li>
+                        <li>What if my media isn't delivered? <br>
+                            <span class="text-sm text-gray-600 dark:text-gray-400">Ensure your Telegram app is updated. For persistent issues, contact support.</span></li>
+                    </ul>
+                    <h3 class="text-xl font-semibold mt-8 mb-4 text-purple-600 dark:text-purple-300">Contact Support</h3>
+                    <p class="text-gray-700 dark:text-gray-300">
+                        For further assistance, please contact our support bot: <a href="https://t.me/YOUR_SUPPORT_BOT_USERNAME" target="_blank" class="text-blue-600 hover:underline">@LinkEarnSupport</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Box -->
+    <div id="messageBox" class="message-box">
+        <p id="messageText"></p>
+        <button onclick="closeMessageBox()">OK</button>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://linkearn-five.vercel.app'; // !!! IMPORTANT: Replace with your deployed Vercel backend API URL, ensure no trailing slash !!!
+        const TELEGRAM_BOT_USERNAME = 'GoogleErrorBot'; // !!! IMPORTANT: Your main Telegram bot's username without '@' !!!
+        const TELEGRAM_HELP_BOT_USERNAME = 'LinkEarnSupport'; // !!! IMPORTANT: Your Telegram help bot's username without '@' !!!
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            } else {
+                console.warn('Lucide icons library not loaded.');
+            }
+
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
+            const isAdmin = localStorage.getItem('isAdmin');
+
+            // Redirect if not logged in or if admin tries to access user dashboard
+            if (!token || !userId) {
+                window.location.href = 'login.html';
+                return;
+            }
+            if (isAdmin === 'true') {
+                window.location.href = 'admin.html'; // Admins should go to admin panel
+                return;
+            }
+
+            // Theme initialization
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+            document.getElementById('darkModeToggle').checked = (savedTheme === 'dark');
+            document.getElementById('themeStatus').textContent = (savedTheme === 'dark' ? 'Dark Mode' : 'Light Mode');
+
+            // Display user ID
+            document.getElementById('userIdDisplay').textContent = `User ID: ${userId}`;
+
+            // Update bot usernames in help and API sections
+            document.getElementById('botUsernameDisplay').textContent = `@${TELEGRAM_BOT_USERNAME}`;
+            document.getElementById('faqBotUsername').textContent = `@${TELEGRAM_BOT_USERNAME}`;
+            document.getElementById('help').querySelector('a').href = `https://t.me/${TELEGRAM_HELP_BOT_USERNAME}`;
+            document.getElementById('help').querySelector('a').textContent = `@${TELEGRAM_HELP_BOT_USERNAME}`;
+
+
+            // Sidebar functionality
+            const navLinks = document.querySelectorAll('.sidebar a');
+            const contentSections = document.querySelectorAll('.content-section');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const sidebarToggleMobile = document.getElementById('sidebarToggleMobile'); // The hamburger menu button
+
+            // Function to toggle sidebar
+            function toggleSidebar() {
+                sidebar.classList.toggle('active');
+                sidebarOverlay.classList.toggle('active');
+                // Disable scrolling on body when sidebar is active
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : 'auto';
+            }
+
+            // Event listener for the mobile menu button
+            sidebarToggleMobile.addEventListener('click', toggleSidebar);
+
+            // Event listener for overlay to close sidebar
+            sidebarOverlay.addEventListener('click', toggleSidebar);
+
+            // Close sidebar when a navigation link is clicked (on mobile)
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (this.id === 'logoutButton') {
+                        logout();
+                        return;
+                    }
+
+                    // Remove active class from all links and sections
+                    navLinks.forEach(nav => nav.classList.remove('active'));
+                    contentSections.forEach(section => section.classList.remove('active'));
+
+                    // Add active class to clicked link
+                    this.classList.add('active');
+
+                    // Show corresponding content section
+                    const sectionId = this.dataset.section;
+                    document.getElementById(sectionId).classList.add('active');
+
+                    // Hide sidebar on mobile after selection
+                    if (window.innerWidth < 768) {
+                        toggleSidebar(); // Use the unified toggle function
+                    }
+
+                    // Load data for the selected section
+                    loadSectionData(sectionId);
+                });
+            });
+
+            // Initial load of statistics
+            loadSectionData('statistics');
+
+            // Event listeners for buttons
+            document.getElementById('generateApiKeyBtn').addEventListener('click', generateApiKey);
+            document.getElementById('copyApiKeyBtn').addEventListener('click', copyApiKey);
+            document.getElementById('saveUsdtAddressBtn').addEventListener('click', saveUsdtAddress);
+            document.getElementById('requestWithdrawalBtn').addEventListener('click', requestWithdrawal);
+            document.getElementById('generateTestLinkBtn').addEventListener('click', generateTestLink);
+            document.getElementById('copyTestLinkBtn').addEventListener('click', copyTestLink);
+            document.getElementById('saveProfileBtn').addEventListener('click', saveProfileDetails);
+            document.getElementById('saveSettingUsdtAddressBtn').addEventListener('click', saveUsdtAddressFromSettings);
+            document.getElementById('darkModeToggle').addEventListener('change', toggleDarkMode);
+
+
+            // Fetch initial user stats on page load
+            fetchUserStats();
+            fetchEarningsHistory();
+            fetchRecentLinks();
+            fetchAdminSettings(); // To get min withdrawal amount for display
+            fetchUserProfileForSettings(); // Fetch user data for settings fields
+
+            function applyTheme(theme) {
+                if (theme === 'dark') {
+                    document.body.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                }
+            }
+
+            async function toggleDarkMode() {
+                const isChecked = document.getElementById('darkModeToggle').checked;
+                const newTheme = isChecked ? 'dark' : 'light';
+                applyTheme(newTheme);
+                document.getElementById('themeStatus').textContent = (newTheme === 'dark' ? 'Dark Mode' : 'Light Mode');
+
+                // Optionally, persist theme preference to backend for user
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/user/settings/theme`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ theme: newTheme })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        console.log('Theme preference saved to backend:', data.theme);
+                    } else {
+                        console.error('Failed to save theme preference to backend:', data.message);
+                    }
+                } catch (error) {
+                    console.error('Error saving theme preference to backend:', error);
+                }
+            }
+
+
+            function logout() {
+                localStorage.removeItem('token');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('isAdmin');
+                // Keep theme preference
+                showMessageBox('Logging out...', () => {
+                    window.location.href = 'login.html';
+                });
+            }
+
+            // Renamed to sidebarToggleMobile and connected to `toggleSidebar`
+            // function toggleSidebar() {
+            //     sidebar.classList.toggle('active');
+            // }
+
+            async function loadSectionData(sectionId) {
+                // This function would trigger data fetches specific to the section
+                // For now, it just shows the section and fetches main stats on load
+                if (sectionId === 'statistics') {
+                    fetchUserStats();
+                } else if (sectionId === 'earnings') {
+                    fetchEarningsHistory();
+                } else if (sectionId === 'recent-links') {
+                    fetchRecentLinks();
+                } else if (sectionId === 'api') {
+                    // Reset API key display
+                    document.getElementById('apiKeyContainer').classList.add('hidden');
+                    document.getElementById('apiKeyDisplay').textContent = '';
+                } else if (sectionId === 'settings') {
+                    fetchUserProfileForSettings();
+                    // Also update the USDT address input in settings if it's there
+                    document.getElementById('settingUsdtAddress').value = localStorage.getItem('usdtAddress') || '';
+                }
+            }
+
+            async function fetchUserStats() {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/user-stats`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        document.getElementById('todayRevenue').textContent = `$${(data.todayRevenue || 0).toFixed(2)}`;
+                        document.getElementById('currentBalance').textContent = `$${(data.currentBalance || 0).toFixed(2)}`;
+                        document.getElementById('withdrawalBalance').textContent = `$${(data.currentBalance || 0).toFixed(2)}`;
+                        document.getElementById('totalViews').textContent = data.totalViews || 0;
+                        document.getElementById('usdtAddress').value = data.usdtAddress || '';
+                        document.getElementById('totalEarningsSummary').textContent = `$${(data.totalEarnings || 0).toFixed(2)}`;
+                        localStorage.setItem('usdtAddress', data.usdtAddress || ''); // Store for settings tab
+
+                        // Update theme based on user's preference from backend
+                        if (data.theme) {
+                            applyTheme(data.theme);
+                            document.getElementById('darkModeToggle').checked = (data.theme === 'dark');
+                            document.getElementById('themeStatus').textContent = (data.theme === 'dark' ? 'Dark Mode' : 'Light Mode');
+                        }
+
+                    } else {
+                        showMessageBox(`Failed to fetch stats: ${data.message || 'Error'}`);
+                    }
+                } catch (error) {
+                    console.error('Error fetching user stats:', error);
+                    showMessageBox('Could not load user statistics.');
+                }
+            }
+
+            async function fetchUserProfileForSettings() {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/user-stats`, { // Re-using user-stats to get profile data
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        // Assuming user-stats returns fullName, email, telegramUsername, usdtAddress
+                        // NOTE: If you have a dedicated /api/user/profile endpoint that returns more comprehensive profile data,
+                        // you should use that instead. For now, I'm fetching the full profile if user-stats isn't enough.
+                        const profileResponse = await fetch(`${API_BASE_URL}/api/user/profile`, {
+                            headers: { 'Authorization': `Bearer ${token}`}
+                        });
+                        const profileData = await profileResponse.json();
+
+                        if (profileResponse.ok && profileData.user) {
+                            document.getElementById('settingFullName').value = profileData.user.fullName || '';
+                            document.getElementById('settingEmail').value = profileData.user.email || '';
+                            document.getElementById('settingTelegramUsername').value = profileData.user.telegramUsername || '';
+                            document.getElementById('settingUsdtAddress').value = profileData.user.usdtAddress || '';
+                        } else {
+                            // Fallback if profile endpoint not ready or fails, use user-stats data
+                             document.getElementById('settingFullName').value = localStorage.getItem('userFullName') || ''; // Assuming you'd store this on login
+                             document.getElementById('settingEmail').value = localStorage.getItem('userEmail') || '';
+                             document.getElementById('settingUsdtAddress').value = data.usdtAddress || '';
+                             // Telegram username might not be stored directly on login, might need another fetch for it.
+                             // For now, it's disabled in the UI.
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching user profile for settings:', error);
+                    // Populate from localStorage if API fails or for initial load
+                    document.getElementById('settingFullName').value = localStorage.getItem('userFullName') || '';
+                    document.getElementById('settingEmail').value = localStorage.getItem('userEmail') || '';
+                    document.getElementById('settingUsdtAddress').value = localStorage.getItem('usdtAddress') || '';
+                }
+            }
+
+            async function saveProfileDetails() {
+                const fullName = document.getElementById('settingFullName').value;
+                // Email and Telegram Username are currently disabled for editing in the HTML directly.
+                // If you enable them, uncomment the following and add validation.
+                // const email = document.getElementById('settingEmail').value;
+                // const telegramUsername = document.getElementById('settingTelegramUsername').value;
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/user/settings/profile`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ fullName }) // Only sending fullName for now
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        showMessageBox('Profile updated successfully!');
+                        localStorage.setItem('userFullName', fullName); // Update local storage
+                        fetchUserStats(); // Refresh dashboard stats if needed
+                    } else {
+                        showMessageBox(`Failed to update profile: ${data.message || 'Error'}`);
+                    }
+                } catch (error) {
+                    console.error('Error saving profile details:', error);
+                    showMessageBox('Could not save profile details.');
+                }
+            }
+
+            async function saveUsdtAddressFromSettings() {
+                const usdtAddress = document.getElementById('settingUsdtAddress').value;
+                if (!usdtAddress) {
+                    showMessageBox('Please enter a USDT BEP20 address.');
+                    return;
+                }
+                if (!/^0x[a-fA-F0-9]{40}$/.test(usdtAddress)) {
+                    showMessageBox('Invalid USDT BEP20 address format. It should start with "0x" and be 42 characters long.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/user/payment`, {
+                        method: 'POST', // or PUT if updating
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ usdtAddress })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        showMessageBox('USDT address saved successfully!');
+                        localStorage.setItem('usdtAddress', usdtAddress);
+                    } else {
+                        showMessageBox(`Failed to save address: ${data.message || 'Error'}`);
+                    }
+                } catch (error) {
+                    console.error('Error saving USDT address:', error);
+                    showMessageBox('Could not save USDT address.');
+                }
+            }
+
+            async function generateApiKey() {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/user/api-key`, {
+                        method: 'GET', // Or POST if API key generation is a POST request on backend
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        document.getElementById('apiKeyDisplay').textContent = data.apiKey;
+                        document.getElementById('apiKeyContainer').classList.remove('hidden');
+                        showMessageBox('API Key generated successfully! It will expire shortly.');
+                    } else {
+                        showMessageBox(`Failed to generate API Key: ${data.message || 'Error'}`);
+                    }
+                } catch (error) {
+                    console.error('Error generating API key:', error);
+                    showMessageBox('Could not generate API key.');
+                }
+            }
+
+            function copyApiKey() {
+                const apiKeyText = document.getElementById('apiKeyDisplay').textContent;
+                copyToClipboard(apiKeyText, 'API Key copied to clipboard!');
+            }
+
+            async function requestWithdrawal() {
+                const amount = parseFloat(document.getElementById('withdrawalAmount').value);
+                const currentBalance = parseFloat(document.getElementById('withdrawalBalance').textContent.replace('$', ''));
+                const minWithdrawal = parseFloat(document.getElementById('minWithdrawalDisplay').textContent.replace('$', ''));
+                const usdtAddress = document.getElementById('usdtAddress').value; // Get from payment section input
+
+                if (isNaN(amount) || amount <= 0) {
+                    showMessageBox('Please enter a valid withdrawal amount.');
+                    return;
+                }
+                if (amount < minWithdrawal) {
+                    showMessageBox(`Withdrawal amount must be at least $${minWithdrawal}.`);
+                    return;
+                }
+                if (amount > currentBalance) {
+                    showMessageBox('Withdrawal amount exceeds your current balance.');
+                    return;
+                }
+                if (!usdtAddress || !/^0x[a-fA-F0-9]{40}$/.test(usdtAddress)) {
+                    showMessageBox('Please save a valid USDT BEP20 address in the section above before requesting withdrawal.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/user/withdraw`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ amount, usdtAddress })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        showMessageBox('Withdrawal request submitted successfully! It is pending admin approval.');
+                        document.getElementById('withdrawalAmount').value = ''; // Clear input
+                        fetchUserStats(); // Update balance
+                    } else {
+                        showMessageBox(`Withdrawal failed: ${data.message || 'Error'}`);
+                    }
+                } catch (error) {
+                    console.error('Error requesting withdrawal:', error);
+                    showMessageBox('Could not submit withdrawal request.');
+                }
+            }
+
+            async function fetchEarningsHistory() {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/user/earnings-history`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        const tableBody = document.getElementById('earningsHistoryTableBody');
+                        tableBody.innerHTML = ''; // Clear existing rows
+                        if (data.earnings && data.earnings.length > 0) {
+                            data.earnings.forEach(earning => {
+                                const row = tableBody.insertRow();
+                                row.insertCell().textContent = new Date(earning.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                                row.insertCell().textContent = `$${(earning.amount || 0).toFixed(2)}`;
+                                row.insertCell().textContent = earning.views || 0; // Assuming views come with earnings history
+                            });
+                        } else {
+                            tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-gray-400">No earnings history found.</td></tr>';
+                        }
+                    } else {
+                        showMessageBox(`Failed to fetch earnings history: ${data.message || 'Error'}`);
+                    }
+                } catch (error) {
+                    console.error('Error fetching earnings history:', error);
+                    showMessageBox('Could not load earnings history.');
+                }
+            }
+
+            async function fetchRecentLinks() {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/user/recent-links`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        const tableBody = document.getElementById('recentLinksTableBody');
+                        tableBody.innerHTML = ''; // Clear existing rows
+                        if (data.links && data.links.length > 0) {
+                            data.links.forEach(link => {
+                                const row = tableBody.insertRow();
+                                const linkCell = row.insertCell();
+                                // Constructing the Telegram Mini App link correctly for the bot
+                                const telegramMiniAppLink = `https://t.me/${TELEGRAM_BOT_USERNAME}/linkearn?startapp=view_${link.uniqueId}`;
+                                linkCell.innerHTML = `<a href="${telegramMiniAppLink}" target="_blank" class="text-blue-600 hover:underline break-all">${telegramMiniAppLink}</a>`;
+                                row.insertCell().textContent = link.viewCount || 0;
+                                row.insertCell().textContent = new Date(link.createdDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                                const actionCell = row.insertCell();
+                                const deleteButton = document.createElement('button');
+                                deleteButton.textContent = 'Delete';
+                                deleteButton.className = 'btn-action bg-red-600 hover:bg-red-700 text-sm py-1 px-2';
+                                deleteButton.onclick = () => deleteLink(link._id);
+                                actionCell.appendChild(deleteButton);
+                            });
+                        } else {
+                            tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-gray-400">No links generated yet.</td></tr>';
+                        }
+                    } else {
+                        showMessageBox(`Failed to fetch recent links: ${data.message || 'Error'}`);
+                    }
+                } catch (error) {
+                    console.error('Error fetching recent links:', error);
+                    showMessageBox('Could not load recent links.');
+                }
+            }
+
+            async function deleteLink(linkId) {
+                // Implement confirmation message here
+                showMessageBox(`Are you sure you want to delete this link? This action cannot be undone.`, () => confirmDelete(linkId), true);
+            }
+
+            async function confirmDelete(linkId) {
+                closeMessageBox(); // Close the confirmation message
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/user/links/${linkId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        showMessageBox('Link deleted successfully!');
+                        fetchRecentLinks(); // Refresh the list
+                    } else {
+                        showMessageBox(`Failed to delete link: ${data.message || 'Error'}`);
+                    }
+                } catch (error) {
+                    console.error('Error deleting link:', error);
+                    showMessageBox('Could not delete link.');
+                }
+            }
+
+
+            async function generateTestLink() {
+                // This would typically simulate sending media to the bot or triggering a backend endpoint
+                // For now, it just shows a placeholder link that the bot will receive.
+                const placeholderUniqueId = 'TEST' + Math.random().toString(36).substring(2, 7).toUpperCase();
+                // The test link should point to the bot's deep linking capability for testing.
+                const testLink = `https://t.me/${TELEGRAM_BOT_USERNAME}/linkearn?startapp=view_${placeholderUniqueId}`;
+
+                document.getElementById('testLinkDisplay').textContent = testLink;
+                document.getElementById('testLinkContainer').classList.remove('hidden');
+                showMessageBox('Test link generated! This link will not count views.');
+            }
+
+            function copyTestLink() {
+                const testLinkText = document.getElementById('testLinkDisplay').textContent;
+                copyToClipboard(testLinkText, 'Test link copied to clipboard!');
+            }
+
+            // Generic copy to clipboard function
+            function copyToClipboard(text, successMessage) {
+                const tempInput = document.createElement('textarea');
+                tempInput.value = text;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                try {
+                    document.execCommand('copy');
+                    showMessageBox(successMessage);
+                } catch (err) {
+                    showMessageBox('Failed to copy. Please copy manually.');
+                    console.error('Failed to copy text: ', err);
+                }
+                document.body.removeChild(tempInput);
+            }
+
+            // Message Box Functions (adapted for confirmation dialogs as well)
+            function showMessageBox(message, onConfirm = null, isConfirm = false) {
+                const msgBox = document.getElementById('messageBox');
+                const msgText = document.getElementById('messageText');
+                let okButton = msgBox.querySelector('#msgBoxOkBtn'); // Use ID for specific button
+                let cancelButton = msgBox.querySelector('#msgBoxCancelBtn');
+
+                // Clear previous buttons if they exist
+                if (cancelButton) cancelButton.remove();
+                if (!okButton) { // Create OK button if it doesn't exist
+                    okButton = document.createElement('button');
+                    okButton.id = 'msgBoxOkBtn';
+                    msgBox.appendChild(okButton);
+                }
+
+                msgText.textContent = message;
+
+                if (isConfirm) {
+                    okButton.textContent = 'Confirm';
+                    okButton.className = 'btn-action bg-red-600 hover:bg-red-700 py-2 px-4 rounded-lg mr-2';
+
+                    cancelButton = document.createElement('button');
+                    cancelButton.id = 'msgBoxCancelBtn';
+                    cancelButton.textContent = 'Cancel';
+                    cancelButton.className = 'btn-action bg-gray-500 hover:bg-gray-600 py-2 px-4 rounded-lg';
+                    msgBox.appendChild(cancelButton);
+
+                    okButton.onclick = () => {
+                        closeMessageBox();
+                        if (onConfirm) onConfirm();
+                    };
+                    cancelButton.onclick = () => closeMessageBox();
+                } else {
+                    okButton.textContent = 'OK';
+                    okButton.className = 'btn-action py-2 px-4 rounded-lg'; // Reset to default style
+                    okButton.onclick = () => closeMessageBox();
+                }
+
+                msgBox.style.display = 'block';
+            }
+
+            function closeMessageBox() {
+                document.getElementById('messageBox').style.display = 'none';
+                // Remove dynamically added cancel button if it exists
+                const cancelButton = document.getElementById('msgBoxCancelBtn');
+                if (cancelButton) cancelButton.remove();
+            }
+
+            async function fetchAdminSettings() {
+                try {
+                    // This endpoint needs to be public or accessible to get settings like min withdrawal
+                    const response = await fetch(`${API_BASE_URL}/api/admin/settings`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}` // Still send token if protected
+                        }
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.minWithdrawal) {
+                        document.getElementById('minWithdrawalDisplay').textContent = `$${data.minWithdrawal}`;
+                        document.getElementById('faqMinWithdrawal').textContent = `$${data.minWithdrawal} USD`;
+                    }
+                } catch (error) {
+                    console.error('Error fetching admin settings for min withdrawal:', error);
+                    // Default to $100 if fetch fails or for initial load
+                    document.getElementById('minWithdrawalDisplay').textContent = `$100`;
+                    document.getElementById('faqMinWithdrawal').textContent = `$100 USD`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
