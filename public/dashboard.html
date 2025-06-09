@@ -412,6 +412,7 @@
         async function initializeDashboard() {
             try {
                 // This single API call gets all necessary initial data
+                // IMPORTANT: Your backend must return `apiKey`, `fullName`, `email`, etc., at this endpoint.
                 currentUserData = await apiRequest('/api/user-stats');
                 
                 // Now update all relevant parts of the UI with the fetched data
@@ -562,7 +563,7 @@
             if (!fullName) return showMessageBox('Full Name cannot be empty.');
              try {
                 // This endpoint needs to exist on your backend to handle profile updates
-                await apiRequest('/api/user/profile', { 
+                const updatedUser = await apiRequest('/api/user/profile', { 
                     method: 'PUT',
                     body: JSON.stringify({ fullName })
                 });
@@ -612,10 +613,15 @@
              try {
                 const result = await apiRequest('/api/user/withdraw', { method: 'POST', body: JSON.stringify({ amount }) });
                 showMessageBox('Withdrawal request submitted!');
-                // Update balance in local cache and UI
-                currentUserData.balance = result.newBalance; // Assuming backend returns the new balance
-                updatePaymentUI();
-                updateStatisticsUI();
+                // Update balance in local cache and UI after successful withdrawal
+                if(result && typeof result.newBalance !== 'undefined') {
+                    currentUserData.balance = result.newBalance; 
+                    updatePaymentUI();
+                    updateStatisticsUI();
+                } else {
+                    // If backend doesn't return new balance, re-fetch all stats
+                    initializeDashboard();
+                }
             } catch (error) { console.error('Withdrawal request failed:', error); }
         }
 
