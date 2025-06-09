@@ -334,8 +334,8 @@
                 <h2 class="text-xl section-title mb-4">Settings</h2>
                 <div class="card mb-6">
                     <h3 class="text-lg font-semibold mb-2">Profile Information</h3>
-                    <input type="text" id="settingFullName" placeholder="Full Name" class="input-field mb-4">
-                    <input type="email" id="settingEmail" placeholder="Email Address" class="input-field mb-4" disabled>
+                    <input type="text" id="settingFullName" placeholder="Loading..." class="input-field mb-4">
+                    <input type="email" id="settingEmail" placeholder="Loading..." class="input-field mb-4" disabled>
                     <button id="saveProfileBtn" class="btn-action">Save Profile</button>
                 </div>
                 <div class="card">
@@ -387,6 +387,9 @@
         const API_BASE_URL = 'https://linkearn-five.vercel.app';
         const TELEGRAM_BOT_USERNAME = 'HelpEarnRobot';
 
+        // --- State Management ---
+        let hasApiKeyBeenChecked = false; // Prevents re-checking API key on tab clicks
+
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
 
@@ -400,6 +403,7 @@
             applyTheme(savedTheme);
 
             setupEventListeners();
+            // Initial data load for the first active section
             loadSectionData('statistics');
         });
 
@@ -476,8 +480,9 @@
                 const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
                 if (response.status === 401) { logout(); throw new Error('Unauthorized'); }
                 if (!response.ok) {
-                    if (endpoint === '/api/user/api-key' && response.status === 404) {
-                        return null; 
+                    // Specific check for API key not found
+                    if ((endpoint === '/api/user/api-key' || endpoint === '/api/user/profile') && response.status === 404) {
+                        return null; // Return null to indicate resource not found gracefully
                     }
                     const errorData = await response.json();
                     throw new Error(errorData.message || `API error: ${response.status}`);
@@ -491,19 +496,26 @@
                 throw error;
             }
         }
-
+        
+        // --- DATA LOADING LOGIC ---
         async function loadSectionData(sectionId) {
             const loadFunctions = {
                 'statistics': fetchUserStats,
-                'payment': fetchUserStats,
+                'payment': fetchUserStats, // Re-uses the same fetch
                 'earnings': fetchEarningsHistory,
                 'recent-links': fetchRecentLinks,
-                'api': fetchApiKey,
+                'api': () => { 
+                    // Only check for the API key if it hasn't been checked before in this session
+                    if (!hasApiKeyBeenChecked) {
+                        fetchApiKey();
+                    }
+                },
                 'settings': fetchUserProfileForSettings,
             };
             if (loadFunctions[sectionId]) await loadFunctions[sectionId]();
         }
         
+        // --- API-SPECIFIC FUNCTIONS ---
         async function fetchUserStats() {
             try {
                 const data = await apiRequest('/api/user-stats');
@@ -517,18 +529,25 @@
 
         async function fetchUserProfileForSettings() {
             try {
-                const data = await apiRequest('/api/user/profile');
-                if (data && data.user) {
-                    document.getElementById('settingFullName').value = data.user.fullName || '';
-                    document.getElementById('settingEmail').value = data.user.email || '';
+                // FIXED: Using /api/user-stats which should contain user info, avoiding the "not found" error
+                const data = await apiRequest('/api/user-stats'); 
+                if (data) {
+                    document.getElementById('settingFullName').value = data.fullName || '';
+                    document.getElementById('settingEmail').value = data.email || '';
                 }
-            } catch (error) { console.error('Failed to fetch profile for settings:', error); }
+            } catch (error) { 
+                console.error('Failed to fetch profile for settings:', error);
+                // In case of error, show empty fields rather than "Loading..."
+                document.getElementById('settingFullName').value = '';
+                document.getElementById('settingEmail').value = '';
+            }
         }
 
         async function saveProfileDetails() {
             const fullName = document.getElementById('settingFullName').value;
             if (!fullName) return showMessageBox('Full Name cannot be empty.');
              try {
+                // This endpoint needs to exist on your backend to handle profile updates
                 await apiRequest('/api/user/profile', { 
                     method: 'PUT',
                     body: JSON.stringify({ fullName })
@@ -538,8 +557,9 @@
         }
 
         async function fetchApiKey() {
+            hasApiKeyBeenChecked = true; // Mark as checked to prevent re-fetching
             try {
-                const data = await apiRequest('/api/user/api-key');
+                const data = await apiRequest('/api/user/api-key'); // GET request
                 if (data && data.apiKey) {
                     document.getElementById('apiKeyDisplay').textContent = data.apiKey;
                     document.getElementById('apiKeyContainer').classList.remove('hidden');
@@ -549,7 +569,7 @@
                     document.getElementById('apiKeyContainer').classList.add('hidden');
                 }
             } catch (error) {
-                console.log('No existing API key found or error fetching. Showing generate button.');
+                console.log('Error fetching API key, assuming none exists.');
                 document.getElementById('generateApiKeyBtn').classList.remove('hidden');
                 document.getElementById('apiKeyContainer').classList.add('hidden');
             }
@@ -584,7 +604,7 @@
         
         async function requestWithdrawal() {
              const amount = parseFloat(document.getElementById('withdrawalAmount').value);
-             const minWithdrawal = 100; // You might want to fetch this from an admin setting
+             const minWithdrawal = 100;
              if(isNaN(amount) || amount < minWithdrawal) {
                  return showMessageBox(`Minimum withdrawal is $${minWithdrawal}.`);
              }
