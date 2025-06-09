@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LinkEarn - User Dashboard</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Poppins Font from Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <!-- Lucide Icons CDN for SVG icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         /* Custom styles for gradients, fonts, and scrollbar */
@@ -68,6 +65,7 @@
         /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
+            height: 8px;
         }
         ::-webkit-scrollbar-track {
             background: #805ad5;
@@ -185,7 +183,7 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
         .mobile-dashboard-header h1 {
-            font-size: 1.75rem; /* Adjusted font size for mobile header */
+            font-size: 1.5rem; /* Adjusted font size for mobile header (was 1.75rem) */
             font-weight: 700;
             text-align: center;
             flex-grow: 1; /* Allow title to take available space */
@@ -328,6 +326,10 @@
             height: 32px;
             color: white;
         }
+        /* Class to make tables scrollable */
+        .table-container {
+            overflow-x: auto;
+        }
 
         /* Toggle switch for dark mode */
         .toggle-switch {
@@ -383,10 +385,13 @@
         .slider.round:before {
             border-radius: 50%;
         }
+        /* Use Poppins Black for specific headers */
+        .font-black {
+            font-weight: 900;
+        }
     </style>
 </head>
 <body>
-    <!-- Mobile Dashboard Header -->
     <header class="mobile-dashboard-header md:hidden">
         <button id="sidebarToggleMobile" class="sidebar-toggle">
             <i data-lucide="menu" class="w-6 h-6"></i>
@@ -394,11 +399,9 @@
         <h1 class="text-white">User Dashboard</h1>
     </header>
 
-    <!-- Main layout container -->
     <div class="flex flex-grow w-full">
-        <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
-            <h2 class="text-3xl font-bold mb-8 text-center text-white">LinkEarn</h2>
+            <h2 class="text-3xl font-black mb-8 text-center text-white">LinkEarn</h2>
             <nav class="flex flex-col">
                 <a href="#" class="active flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="statistics">
                     <i data-lucide="layout-dashboard" class="w-6 h-6"></i><span>Statistics</span>
@@ -415,9 +418,6 @@
                 <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="recent-links">
                     <i data-lucide="link" class="w-6 h-6"></i><span>Recent Links</span>
                 </a>
-                <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="test-link">
-                    <i data-lucide="test-tube" class="w-6 h-6"></i><span>Test Link</span>
-                </a>
                 <a href="#" class="flex items-center space-x-3 p-3 rounded-xl hover:bg-purple-800 transition-colors duration-200" data-section="settings">
                     <i data-lucide="settings" class="w-6 h-6"></i><span>Settings</span>
                 </a>
@@ -430,16 +430,13 @@
             </nav>
         </aside>
 
-        <!-- Overlay for mobile sidebar -->
         <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-        <!-- Main content area -->
         <div class="main-content" id="mainContent">
-            <h1 class="text-4xl font-bold mb-8 text-purple-700 dark:text-white hidden md:block">User Dashboard</h1>
+            <h1 class="text-3xl font-black mb-8 text-purple-700 dark:text-white hidden md:block">User Dashboard</h1>
 
-            <!-- Statistics Section -->
             <div id="statistics" class="content-section active">
-                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Statistics Overview</h2>
+                <h2 class="text-3xl font-black mb-6 text-purple-600 dark:text-purple-300">Statistics Overview</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     <div class="card text-center">
                         <div class="icon-container">
@@ -469,16 +466,15 @@
                 </div>
             </div>
 
-            <!-- API Section -->
             <div id="api" class="content-section">
-                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">API Integration</h2>
+                <h2 class="text-3xl font-black mb-6 text-purple-600 dark:text-purple-300">🔑 API Integration</h2>
                 <div class="card p-6">
-                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Generate API Key</h3>
+                    <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Generate Your API Key</h3>
                     <p class="text-gray-700 dark:text-gray-300 mb-4">
-                        Click the button below to generate a one-time API key. Use this key in Telegram to connect your bot.
+                        Click the button below to get a unique API key. You'll use this key to connect your Telegram account to LinkEarn.
                     </p>
                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                        Instructions: Go to <span id="botUsernameDisplay" class="font-bold">@yourbotusername</span> in Telegram, send <code class="bg-gray-200 dark:bg-gray-700 rounded px-2 py-1 text-gray-800 dark:text-gray-200">/start</code>, and then paste this API key.
+                        ➡️ Go to <span id="botUsernameDisplay" class="font-bold">@yourbotusername</span> in Telegram, send <code class="bg-gray-200 dark:bg-gray-700 rounded px-2 py-1 text-gray-800 dark:text-gray-200">/start</code>, and then paste the generated API key.
                     </p>
                     <button id="generateApiKeyBtn" class="btn-action mb-4">Generate New API Key</button>
                     <div id="apiKeyContainer" class="hidden">
@@ -491,9 +487,8 @@
                 </div>
             </div>
 
-            <!-- Payment Section -->
             <div id="payment" class="content-section">
-                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Payment Settings</h2>
+                <h2 class="text-3xl font-black mb-6 text-purple-600 dark:text-purple-300">Payment Settings</h2>
                 <div class="card p-6 mb-8">
                     <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">USDT BEP20 Wallet Address</h3>
                     <input type="text" id="usdtAddress" placeholder="Enter your USDT BEP20 address" class="input-field mb-4">
@@ -508,74 +503,51 @@
                 </div>
             </div>
 
-            <!-- Earnings Section -->
             <div id="earnings" class="content-section">
-                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Earnings History</h2>
+                <h2 class="text-3xl font-black mb-6 text-purple-600 dark:text-purple-300">Earnings History</h2>
                 <div class="card p-6">
                     <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Last 10 Days Earnings</h3>
-                    <table class="min-w-full">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Earnings</th>
-                                <th>Views</th>
-                            </tr>
-                        </thead>
-                        <tbody id="earningsHistoryTableBody">
-                            <!-- Earnings data will be populated here -->
-                        </tbody>
-                    </table>
+                    <div class="table-container"> <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Earnings</th>
+                                    <th>Views</th>
+                                </tr>
+                            </thead>
+                            <tbody id="earningsHistoryTableBody">
+                                </tbody>
+                        </table>
+                    </div>
                     <p class="text-xl font-bold mt-6 text-gray-800 dark:text-gray-200">Total Earnings: <span class="text-green-600 dark:text-green-400" id="totalEarningsSummary">$0.00</span></p>
                 </div>
             </div>
 
-            <!-- Recent Links Section -->
             <div id="recent-links" class="content-section">
-                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Recent Links</h2>
+                <h2 class="text-3xl font-black mb-6 text-purple-600 dark:text-purple-300">Recent Links</h2>
                 <div class="card p-6">
-                    <table class="min-w-full">
-                        <thead>
-                            <tr>
-                                <th>Link</th>
-                                <th>Views</th>
-                                <th>Date Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recentLinksTableBody">
-                            <!-- Recent links data will be populated here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Test Link Section -->
-            <div id="test-link" class="content-section">
-                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Test Link Generation</h2>
-                <div class="card p-6">
-                    <p class="text-gray-700 dark:text-gray-300 mb-4">
-                        Generate a test link that doesn't count views or affect your earnings. Useful for testing media delivery.
-                    </p>
-                    <button id="generateTestLinkBtn" class="btn-action">Generate Test Link</button>
-                    <div id="testLinkContainer" class="hidden mt-4">
-                        <p class="text-lg font-mono bg-gray-200 dark:bg-gray-700 p-3 rounded-lg flex justify-between items-center break-all text-gray-800 dark:text-gray-200">
-                            <span id="testLinkDisplay"></span>
-                            <button id="copyTestLinkBtn" class="ml-4 btn-action bg-blue-600 hover:bg-blue-700">Copy</button>
-                        </p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">This is a test link and will not contribute to your earnings.</p>
+                     <div class="table-container"> <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th>Link</th>
+                                    <th>Views</th>
+                                    <th>Date Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentLinksTableBody">
+                                </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Settings Section -->
             <div id="settings" class="content-section">
-                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Settings</h2>
+                <h2 class="text-3xl font-black mb-6 text-purple-600 dark:text-purple-300">Settings</h2>
                 <div class="card p-6 mb-8">
                     <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Profile Information</h3>
                     <input type="text" id="settingFullName" placeholder="Full Name" class="input-field mb-4">
-                    <input type="email" id="settingEmail" placeholder="Email Address" class="input-field mb-4" disabled> <!-- Email usually not editable -->
-                    <input type="text" id="settingTelegramUsername" placeholder="Telegram Username" class="input-field mb-4" disabled> <!-- Telegram Username usually not editable -->
-                    <button id="saveProfileBtn" class="btn-action">Save Profile</button>
+                    <input type="email" id="settingEmail" placeholder="Email Address" class="input-field mb-4" disabled> <input type="text" id="settingTelegramUsername" placeholder="Telegram Username" class="input-field mb-4" disabled> <button id="saveProfileBtn" class="btn-action">Save Profile</button>
                 </div>
 
                 <div class="card p-6 mb-8">
@@ -594,9 +566,8 @@
                 </div>
             </div>
 
-            <!-- Help Section -->
             <div id="help" class="content-section">
-                <h2 class="text-3xl font-bold mb-6 text-purple-600 dark:text-purple-300">Help & Support</h2>
+                <h2 class="text-3xl font-black mb-6 text-purple-600 dark:text-purple-300">Help & Support</h2>
                 <div class="card p-6">
                     <h3 class="text-xl font-semibold mb-4 text-purple-600 dark:text-purple-300">Frequently Asked Questions</h3>
                     <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300">
@@ -620,7 +591,6 @@
         </div>
     </div>
 
-    <!-- Message Box -->
     <div id="messageBox" class="message-box">
         <p id="messageText"></p>
         <button onclick="closeMessageBox()">OK</button>
@@ -728,8 +698,6 @@
             document.getElementById('copyApiKeyBtn').addEventListener('click', copyApiKey);
             document.getElementById('saveUsdtAddressBtn').addEventListener('click', saveUsdtAddress);
             document.getElementById('requestWithdrawalBtn').addEventListener('click', requestWithdrawal);
-            document.getElementById('generateTestLinkBtn').addEventListener('click', generateTestLink);
-            document.getElementById('copyTestLinkBtn').addEventListener('click', copyTestLink);
             document.getElementById('saveProfileBtn').addEventListener('click', saveProfileDetails);
             document.getElementById('saveSettingUsdtAddressBtn').addEventListener('click', saveUsdtAddressFromSettings);
             document.getElementById('darkModeToggle').addEventListener('change', toggleDarkMode);
@@ -790,11 +758,6 @@
                     window.location.href = 'login.html';
                 });
             }
-
-            // Renamed to sidebarToggleMobile and connected to `toggleSidebar`
-            // function toggleSidebar() {
-            //     sidebar.classList.toggle('active');
-            // }
 
             async function loadSectionData(sectionId) {
                 // This function would trigger data fetches specific to the section
@@ -1125,24 +1088,6 @@
                 }
             }
 
-
-            async function generateTestLink() {
-                // This would typically simulate sending media to the bot or triggering a backend endpoint
-                // For now, it just shows a placeholder link that the bot will receive.
-                const placeholderUniqueId = 'TEST' + Math.random().toString(36).substring(2, 7).toUpperCase();
-                // The test link should point to the bot's deep linking capability for testing.
-                const testLink = `https://t.me/${TELEGRAM_BOT_USERNAME}/linkearn?startapp=view_${placeholderUniqueId}`;
-
-                document.getElementById('testLinkDisplay').textContent = testLink;
-                document.getElementById('testLinkContainer').classList.remove('hidden');
-                showMessageBox('Test link generated! This link will not count views.');
-            }
-
-            function copyTestLink() {
-                const testLinkText = document.getElementById('testLinkDisplay').textContent;
-                copyToClipboard(testLinkText, 'Test link copied to clipboard!');
-            }
-
             // Generic copy to clipboard function
             function copyToClipboard(text, successMessage) {
                 const tempInput = document.createElement('textarea');
@@ -1194,7 +1139,12 @@
                 } else {
                     okButton.textContent = 'OK';
                     okButton.className = 'btn-action py-2 px-4 rounded-lg'; // Reset to default style
-                    okButton.onclick = () => closeMessageBox();
+                    okButton.onclick = () => {
+                        if (onConfirm) {
+                            onConfirm();
+                        }
+                        closeMessageBox();
+                    };
                 }
 
                 msgBox.style.display = 'block';
