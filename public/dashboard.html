@@ -395,8 +395,7 @@
                 window.location.href = 'login.html';
                 return;
             }
-
-            // --- THEME INITIALIZATION (FIXED) ---
+            
             const savedTheme = localStorage.getItem('theme') || 'dark';
             applyTheme(savedTheme);
 
@@ -477,18 +476,16 @@
                 const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
                 if (response.status === 401) { logout(); throw new Error('Unauthorized'); }
                 if (!response.ok) {
-                    // For 404 on API key check, we don't want to show an error message
                     if (endpoint === '/api/user/api-key' && response.status === 404) {
-                        return null; // Return null to indicate key not found
+                        return null; 
                     }
                     const errorData = await response.json();
                     throw new Error(errorData.message || `API error: ${response.status}`);
                 }
-                 // Handle cases where response might be empty
                 const text = await response.text();
                 return text ? JSON.parse(text) : {};
             } catch (error) {
-                if(error.message !== 'Unauthorized') { // Don't show generic error for logout
+                if(error.message !== 'Unauthorized') { 
                     showMessageBox(error.message, 3000);
                 }
                 throw error;
@@ -497,9 +494,12 @@
 
         async function loadSectionData(sectionId) {
             const loadFunctions = {
-                'statistics': fetchUserStats, 'payment': fetchUserStats,
-                'earnings': fetchEarningsHistory, 'recent-links': fetchRecentLinks,
-                'api': fetchApiKey, 'settings': fetchUserProfileForSettings,
+                'statistics': fetchUserStats,
+                'payment': fetchUserStats,
+                'earnings': fetchEarningsHistory,
+                'recent-links': fetchRecentLinks,
+                'api': fetchApiKey,
+                'settings': fetchUserProfileForSettings,
             };
             if (loadFunctions[sectionId]) await loadFunctions[sectionId]();
         }
@@ -515,12 +515,31 @@
             } catch (error) { console.error('Failed to fetch user stats:', error); }
         }
 
-        async function fetchUserProfileForSettings() { /* ... similar to previous ... */ }
-        async function saveProfileDetails() { /* ... similar to previous ... */ }
+        async function fetchUserProfileForSettings() {
+            try {
+                const data = await apiRequest('/api/user/profile');
+                if (data && data.user) {
+                    document.getElementById('settingFullName').value = data.user.fullName || '';
+                    document.getElementById('settingEmail').value = data.user.email || '';
+                }
+            } catch (error) { console.error('Failed to fetch profile for settings:', error); }
+        }
+
+        async function saveProfileDetails() {
+            const fullName = document.getElementById('settingFullName').value;
+            if (!fullName) return showMessageBox('Full Name cannot be empty.');
+             try {
+                await apiRequest('/api/user/profile', { 
+                    method: 'PUT',
+                    body: JSON.stringify({ fullName })
+                });
+                showMessageBox('Profile updated successfully!');
+            } catch (error) { console.error('Failed to save profile:', error); }
+        }
 
         async function fetchApiKey() {
             try {
-                const data = await apiRequest('/api/user/api-key'); // GET request
+                const data = await apiRequest('/api/user/api-key');
                 if (data && data.apiKey) {
                     document.getElementById('apiKeyDisplay').textContent = data.apiKey;
                     document.getElementById('apiKeyContainer').classList.remove('hidden');
@@ -563,8 +582,36 @@
             } catch (error) { console.error('Failed to save USDT address:', error); }
         }
         
-        async function requestWithdrawal() { /* ... similar to previous ... */ }
-        async function fetchEarningsHistory() { /* ... similar to previous ... */ }
+        async function requestWithdrawal() {
+             const amount = parseFloat(document.getElementById('withdrawalAmount').value);
+             const minWithdrawal = 100; // You might want to fetch this from an admin setting
+             if(isNaN(amount) || amount < minWithdrawal) {
+                 return showMessageBox(`Minimum withdrawal is $${minWithdrawal}.`);
+             }
+             try {
+                await apiRequest('/api/user/withdraw', { method: 'POST', body: JSON.stringify({ amount }) });
+                showMessageBox('Withdrawal request submitted!');
+                fetchUserStats();
+            } catch (error) { console.error('Withdrawal request failed:', error); }
+        }
+
+        async function fetchEarningsHistory() {
+            try {
+                const data = await apiRequest('/api/user/earnings-history');
+                const tableBody = document.getElementById('earningsHistoryTableBody');
+                tableBody.innerHTML = '';
+                if (data.earnings && data.earnings.length > 0) {
+                    data.earnings.forEach(e => {
+                        const row = tableBody.insertRow();
+                        row.insertCell().textContent = new Date(e.date).toLocaleDateString();
+                        row.insertCell().textContent = `$${(e.amount || 0).toFixed(2)}`;
+                        row.insertCell().textContent = e.views || 0;
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-gray-400">No earnings history found.</td></tr>';
+                }
+            } catch (error) { console.error('Failed to fetch earnings history:', error); }
+        }
 
         async function fetchRecentLinks() {
             try {
@@ -597,7 +644,7 @@
                 try {
                     await apiRequest(`/api/user/links/${linkId}`, { method: 'DELETE' });
                     showMessageBox('Link deleted!');
-                    fetchRecentLinks(); // Refresh list
+                    fetchRecentLinks();
                 } catch (error) { console.error('Failed to delete link:', error); }
             }
         }
