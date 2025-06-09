@@ -388,7 +388,7 @@
         const TELEGRAM_BOT_USERNAME = 'HelpEarnRobot';
 
         // --- State Management ---
-        let hasApiKeyBeenChecked = false; // Prevents re-checking API key on tab clicks
+        let currentUserData = null; // Caches all user data from the initial fetch
 
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -403,9 +403,28 @@
             applyTheme(savedTheme);
 
             setupEventListeners();
-            // Initial data load for the first active section
-            loadSectionData('statistics');
+            
+            // --- INITIAL DATA FETCH ---
+            // Fetch all essential data once on page load
+            initializeDashboard();
         });
+        
+        async function initializeDashboard() {
+            try {
+                // This single API call gets all necessary initial data
+                currentUserData = await apiRequest('/api/user-stats');
+                
+                // Now update all relevant parts of the UI with the fetched data
+                updateStatisticsUI();
+                updatePaymentUI();
+                updateApiKeyUI();
+                updateSettingsUI();
+
+            } catch (error) {
+                console.error('Failed to initialize dashboard:', error);
+                showMessageBox('Could not load your dashboard data. Please try logging in again.');
+            }
+        }
 
         function setupEventListeners() {
             document.querySelectorAll('.sidebar a[data-section]').forEach(link => {
@@ -428,7 +447,10 @@
             link.classList.add('active');
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
             document.getElementById(link.dataset.section).classList.add('active');
+            
+            // Load data for sections that need it on-demand
             loadSectionData(link.dataset.section);
+            
             if (window.innerWidth < 768) toggleSidebar();
         }
 
@@ -480,10 +502,6 @@
                 const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
                 if (response.status === 401) { logout(); throw new Error('Unauthorized'); }
                 if (!response.ok) {
-                    // Specific check for API key not found
-                    if ((endpoint === '/api/user/api-key' || endpoint === '/api/user/profile') && response.status === 404) {
-                        return null; // Return null to indicate resource not found gracefully
-                    }
                     const errorData = await response.json();
                     throw new Error(errorData.message || `API error: ${response.status}`);
                 }
@@ -497,52 +515,48 @@
             }
         }
         
-        // --- DATA LOADING LOGIC ---
+        // --- DATA LOADING & UI UPDATING ---
         async function loadSectionData(sectionId) {
-            const loadFunctions = {
-                'statistics': fetchUserStats,
-                'payment': fetchUserStats, // Re-uses the same fetch
+            // Most data is loaded initially. This is for sections that need fresh data on click.
+            const onDemandFunctions = {
                 'earnings': fetchEarningsHistory,
                 'recent-links': fetchRecentLinks,
-                'api': () => { 
-                    // Only check for the API key if it hasn't been checked before in this session
-                    if (!hasApiKeyBeenChecked) {
-                        fetchApiKey();
-                    }
-                },
-                'settings': fetchUserProfileForSettings,
             };
-            if (loadFunctions[sectionId]) await loadFunctions[sectionId]();
+            if (onDemandFunctions[sectionId]) await onDemandFunctions[sectionId]();
+        }
+        
+        function updateStatisticsUI() {
+            if (!currentUserData) return;
+            document.getElementById('todayRevenue').textContent = `$${(currentUserData.todayRevenue || 0).toFixed(2)}`;
+            document.getElementById('currentBalance').textContent = `$${(currentUserData.currentBalance || 0).toFixed(2)}`;
+            document.getElementById('totalViews').textContent = currentUserData.totalViews || 0;
+        }
+
+        function updatePaymentUI() {
+             if (!currentUserData) return;
+             document.getElementById('withdrawalBalance').textContent = `$${(currentUserData.currentBalance || 0).toFixed(2)}`;
+             document.getElementById('usdtAddress').value = currentUserData.usdtAddress || '';
+        }
+
+        function updateSettingsUI() {
+             if (!currentUserData) return;
+             document.getElementById('settingFullName').value = currentUserData.fullName || '';
+             document.getElementById('settingEmail').value = currentUserData.email || '';
+        }
+
+        function updateApiKeyUI() {
+            if (!currentUserData) return;
+            if (currentUserData.apiKey) {
+                document.getElementById('apiKeyDisplay').textContent = currentUserData.apiKey;
+                document.getElementById('apiKeyContainer').classList.remove('hidden');
+                document.getElementById('generateApiKeyBtn').classList.add('hidden');
+            } else {
+                document.getElementById('generateApiKeyBtn').classList.remove('hidden');
+                document.getElementById('apiKeyContainer').classList.add('hidden');
+            }
         }
         
         // --- API-SPECIFIC FUNCTIONS ---
-        async function fetchUserStats() {
-            try {
-                const data = await apiRequest('/api/user-stats');
-                document.getElementById('todayRevenue').textContent = `$${(data.todayRevenue || 0).toFixed(2)}`;
-                document.getElementById('currentBalance').textContent = `$${(data.currentBalance || 0).toFixed(2)}`;
-                document.getElementById('withdrawalBalance').textContent = `$${(data.currentBalance || 0).toFixed(2)}`;
-                document.getElementById('totalViews').textContent = data.totalViews || 0;
-                document.getElementById('usdtAddress').value = data.usdtAddress || '';
-            } catch (error) { console.error('Failed to fetch user stats:', error); }
-        }
-
-        async function fetchUserProfileForSettings() {
-            try {
-                // FIXED: Using /api/user-stats which should contain user info, avoiding the "not found" error
-                const data = await apiRequest('/api/user-stats'); 
-                if (data) {
-                    document.getElementById('settingFullName').value = data.fullName || '';
-                    document.getElementById('settingEmail').value = data.email || '';
-                }
-            } catch (error) { 
-                console.error('Failed to fetch profile for settings:', error);
-                // In case of error, show empty fields rather than "Loading..."
-                document.getElementById('settingFullName').value = '';
-                document.getElementById('settingEmail').value = '';
-            }
-        }
-
         async function saveProfileDetails() {
             const fullName = document.getElementById('settingFullName').value;
             if (!fullName) return showMessageBox('Full Name cannot be empty.');
@@ -552,27 +566,10 @@
                     method: 'PUT',
                     body: JSON.stringify({ fullName })
                 });
+                // Update local data cache and show success
+                currentUserData.fullName = fullName;
                 showMessageBox('Profile updated successfully!');
             } catch (error) { console.error('Failed to save profile:', error); }
-        }
-
-        async function fetchApiKey() {
-            hasApiKeyBeenChecked = true; // Mark as checked to prevent re-fetching
-            try {
-                const data = await apiRequest('/api/user/api-key'); // GET request
-                if (data && data.apiKey) {
-                    document.getElementById('apiKeyDisplay').textContent = data.apiKey;
-                    document.getElementById('apiKeyContainer').classList.remove('hidden');
-                    document.getElementById('generateApiKeyBtn').classList.add('hidden');
-                } else {
-                    document.getElementById('generateApiKeyBtn').classList.remove('hidden');
-                    document.getElementById('apiKeyContainer').classList.add('hidden');
-                }
-            } catch (error) {
-                console.log('Error fetching API key, assuming none exists.');
-                document.getElementById('generateApiKeyBtn').classList.remove('hidden');
-                document.getElementById('apiKeyContainer').classList.add('hidden');
-            }
         }
 
         async function generateApiKey() {
@@ -580,7 +577,9 @@
                 const data = await apiRequest('/api/user/api-key', { method: 'POST' });
                 if (data && data.apiKey) {
                     showMessageBox('Permanent API Key generated successfully!');
-                    await fetchApiKey(); 
+                    // Update local data cache and refresh UI
+                    currentUserData.apiKey = data.apiKey;
+                    updateApiKeyUI();
                 }
             } catch (error) { console.error('Failed to generate API key:', error); }
         }
@@ -598,6 +597,8 @@
             }
             try {
                 await apiRequest('/api/user/payment', { method: 'POST', body: JSON.stringify({ usdtAddress }) });
+                // Update local data cache and show success
+                currentUserData.usdtAddress = usdtAddress;
                 showMessageBox('USDT address saved!');
             } catch (error) { console.error('Failed to save USDT address:', error); }
         }
@@ -609,9 +610,12 @@
                  return showMessageBox(`Minimum withdrawal is $${minWithdrawal}.`);
              }
              try {
-                await apiRequest('/api/user/withdraw', { method: 'POST', body: JSON.stringify({ amount }) });
+                const result = await apiRequest('/api/user/withdraw', { method: 'POST', body: JSON.stringify({ amount }) });
                 showMessageBox('Withdrawal request submitted!');
-                fetchUserStats();
+                // Update balance in local cache and UI
+                currentUserData.balance = result.newBalance; // Assuming backend returns the new balance
+                updatePaymentUI();
+                updateStatisticsUI();
             } catch (error) { console.error('Withdrawal request failed:', error); }
         }
 
